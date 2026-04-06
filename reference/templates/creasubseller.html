@@ -1,0 +1,65 @@
+{% extends "basev5.html" %}
+{% block title %}Crea Nuovo Subseller{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('subseller') }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Subseller
+  </a>
+
+  <div class="pg-title">Crea Nuovo Subseller</div>
+
+  <p style="color:var(--txt-soft); margin-bottom:24px;">
+    Inserisci l'Id telegram. Assicurati che non esista già come utente o subseller.
+  </p>
+
+  <div class="form-card" style="max-width:460px;">
+    <form method="post" action="{{ url_for('creasubseller') }}" autocomplete="off" id="creaSubsellerForm">
+      <div class="mb-4">
+        <label for="idtelegram" class="form-label">
+          <i class="fa-solid fa-tag me-1"></i> Id telegram
+        </label>
+        <input type="text" class="form-control" id="idtelegram" name="idtelegram" required placeholder="Inserisci Id telegram" inputmode="numeric">
+        <div class="invalid-feedback" id="idtelegram-feedback">
+          Inserisci un ID numerico di almeno 3 cifre.
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="submitBtn" disabled>
+        <i class="fa-solid fa-user-plus me-1"></i> Crea Subseller
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const field = document.getElementById("idtelegram");
+  const submitBtn = document.getElementById("submitBtn");
+
+  function validateTelegram() {
+    const val = field.value.trim();
+    const valid = /^\d{3,}$/.test(val);
+    if (valid) {
+      field.classList.remove("is-invalid");
+      field.classList.add("is-valid");
+      submitBtn.disabled = false;
+    } else {
+      field.classList.remove("is-valid");
+      if (val.length > 0) field.classList.add("is-invalid");
+      else field.classList.remove("is-invalid");
+      submitBtn.disabled = true;
+    }
+  }
+
+  field.addEventListener("input", validateTelegram);
+
+  document.getElementById("creaSubsellerForm").addEventListener("submit", function(e) {
+    const val = field.value.trim();
+    if (!/^\d{3,}$/.test(val)) {
+      e.preventDefault();
+      field.classList.add("is-invalid");
+    }
+  });
+</script>
+{% endblock %}

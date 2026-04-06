@@ -1,0 +1,44 @@
+{% extends "basev5.html" %}
+{% block title %}Modifica Incremento per {{ idtelegram }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('subseller_detail', idtelegram=idtelegram) }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Dettagli Subseller
+  </a>
+
+  <div class="pg-title">
+    Modifica incremento per: {{ idtelegram }}
+  </div>
+
+  <div class="form-card" style="max-width:460px;">
+    <form method="post" action="{{ url_for('modifica_incremento_subseller', idtelegram=idtelegram) }}" autocomplete="off" id="modificaForm">
+      <div class="mb-4">
+        <label for="incremento" class="form-label">
+          <i class="fa-solid fa-percent me-1"></i> Nuovo incremento
+        </label>
+        <input type="number" class="form-control" id="incremento" name="incremento" required min="0.01" step="0.01" placeholder="Inserisci valore maggiore di 0">
+        <div class="invalid-feedback">
+          Inserisci un valore maggiore di 0.
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="submitModifica">
+        <i class="fa-solid fa-pen-to-square me-1"></i> Modifica
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Validazione di base del form
+  document.getElementById("modificaForm").addEventListener("submit", function(e) {
+    var incremento = parseFloat(document.getElementById("incremento").value);
+    if (isNaN(incremento) || incremento <= 0) {
+      e.preventDefault();
+      document.getElementById("incremento").classList.add("is-invalid");
+    }
+  });
+</script>
+{% endblock %}

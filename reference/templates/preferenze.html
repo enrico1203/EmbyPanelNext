@@ -1,0 +1,254 @@
+{% extends "basev5.html" %}
+
+{% block title %}Preferenze{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Preferenze
+    <span class="pg-badge" style="background:rgba(245,184,75,0.12); color:var(--gold); border:1px solid rgba(245,184,75,0.25);">
+      <i class="fa-solid fa-sliders fa-xs me-1"></i>Impostazioni personali
+    </span>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-dismissible fade show mb-4" role="alert"
+             style="background:rgba(61,213,165,0.1); color:var(--teal); border:1px solid rgba(61,213,165,0.25); border-radius:var(--radius-sm);">
+          <i class="fa-solid fa-circle-check me-2"></i>{{ message }}
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+
+    <!-- ── FORMATO DATA ── -->
+    <div class="form-card" style="flex:1; min-width:300px; max-width:460px;">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--txt-soft); font-weight:700; margin-bottom:20px;">
+        <i class="fa-solid fa-calendar-days me-1"></i> Formato Data
+      </div>
+      <p style="font-size:.875rem; color:var(--txt-soft); margin-bottom:20px;">
+        Scegli come visualizzare le date di scadenza in tutto il pannello.
+      </p>
+      <form method="post" action="{{ url_for('preferenze') }}">
+        <input type="hidden" name="form_type" value="dateformat">
+        <div class="mb-4">
+          <label for="formatodata" class="form-label">Formato preferito</label>
+          <select class="form-select" id="formatodata" name="formatodata">
+            {% for fmt, label, example in date_format_options %}
+              <option value="{{ fmt }}" {% if fmt == current_format %}selected{% endif %}>
+                {{ label }} &nbsp;—&nbsp; es. {{ example }}
+              </option>
+            {% endfor %}
+          </select>
+          <div style="font-size:.8rem; color:var(--txt-soft); margin-top:8px;">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            GG = giorno &nbsp;·&nbsp; MM = mese &nbsp;·&nbsp; AAAA = anno esteso &nbsp;·&nbsp; AA = anno breve
+          </div>
+        </div>
+        <div id="preview-box" style="
+          background:var(--bg-3); border:1px solid var(--border);
+          border-radius:var(--radius-sm); padding:12px 16px;
+          margin-bottom:20px; display:flex; align-items:center; gap:10px;
+          font-size:.9rem;">
+          <i class="fa-solid fa-eye" style="color:var(--gold);"></i>
+          <span style="color:var(--txt-soft);">Anteprima:</span>
+          <span id="preview-value" style="color:var(--txt); font-weight:600; font-family:monospace;"></span>
+        </div>
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Salva formato
+        </button>
+      </form>
+    </div>
+
+    <!-- ── PREFERENZE COPIA ── -->
+    {# Formato: frase_emby|campiemby|frase_plex|campiplex|frase_jelly|campijellyfin #}
+    {%
+      set parts = current_prefs.split('|') if current_prefs else []
+      %}
+    {%
+      set cur_frase_emby  = parts[0] if parts|length > 0 else ''
+      %}
+    {%
+      set cur_emby        = (parts[1].split(',') if parts|length > 1 and parts[1] else [])
+      %}
+    {%
+      set cur_frase_plex  = parts[2] if parts|length > 2 else ''
+      %}
+    {%
+      set cur_plex        = (parts[3].split(',') if parts|length > 3 and parts[3] else [])
+      %}
+    {%
+      set cur_frase_jelly = parts[4] if parts|length > 4 else ''
+      %}
+    {%
+      set cur_jelly       = (parts[5].split(',') if parts|length > 5 and parts[5] else [])
+      %}
+
+    <div class="form-card" style="flex:2; min-width:340px; max-width:760px;">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--txt-soft); font-weight:700; margin-bottom:20px;">
+        <i class="fa-solid fa-clipboard me-1"></i> Informazioni da Copiare
+      </div>
+      <p style="font-size:.875rem; color:var(--txt-soft); margin-bottom:20px;">
+        Scegli cosa includere quando premi <strong style="color:var(--txt);">Copia info</strong> nella pagina utente.
+        Se non selezioni nulla vengono copiati tutti i campi (comportamento predefinito).
+      </p>
+
+      <form method="post" action="{{ url_for('preferenze') }}">
+        <input type="hidden" name="form_type" value="copyprefs">
+
+        <div style="font-size:.8rem; color:var(--txt-soft); margin-bottom:16px;">
+          <i class="fa-solid fa-circle-info me-1"></i>
+          Ogni piattaforma ha la propria intestazione. Usa <code style="color:var(--gold);">\n</code> per andare a capo.
+        </div>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+
+          <!-- Emby -->
+          <div style="flex:1; min-width:200px;">
+            <div style="font-size:.8rem; font-weight:700; color:var(--gold); margin-bottom:10px; text-transform:uppercase; letter-spacing:.08em;">
+              <img src="{{ url_for('static', filename='emby.png') }}" style="height:13px; margin-right:4px;">Emby
+            </div>
+            <div class="mb-3">
+              <input type="text" class="form-control form-control-sm" name="frase_emby"
+                     placeholder="Intestazione Emby (opzionale)"
+                     value="{{ cur_frase_emby }}">
+            </div>
+            {% set emby_fields = [
+              ('username',    '👤 Username'),
+              ('password',    '🔑 Password'),
+              ('scadenza',    '⏰ Scadenza'),
+              ('attivazione', '📅 Data attivazione'),
+              ('giorni',      '⏳ Giorni rimanenti'),
+              ('server',      '💻 Host'),
+              ('http',        '🌍 HTTP'),
+              ('porta_http',  '🔌 Porta HTTP'),
+              ('https',       '🔐 HTTPS'),
+              ('porta_https', '🔐 Porta HTTPS'),
+              ('richieste',   '📈 Richieste'),
+              ('schermi',     '🖥️ Schermi'),
+              ('4k',          '🎬 4K'),
+              ('download',    '📥 Download'),
+              ('note',        '📝 Note'),
+            ] %}
+            {% for key, label in emby_fields %}
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox"
+                     name="campiemby" value="{{ key }}"
+                     id="emby_{{ key }}"
+                     {% if not cur_emby or key in cur_emby %}checked{% endif %}>
+              <label class="form-check-label" for="emby_{{ key }}" style="font-size:.875rem;">
+                {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Plex -->
+          <div style="flex:1; min-width:200px;">
+            <div style="font-size:.8rem; font-weight:700; color:#e5a00d; margin-bottom:10px; text-transform:uppercase; letter-spacing:.08em;">
+              <img src="{{ url_for('static', filename='plex.png') }}" style="height:13px; margin-right:4px;">Plex
+            </div>
+            <div class="mb-3">
+              <input type="text" class="form-control form-control-sm" name="frase_plex"
+                     placeholder="Intestazione Plex (opzionale)"
+                     value="{{ cur_frase_plex }}">
+            </div>
+            {% set plex_fields = [
+              ('username',    '👤 Username'),
+              ('scadenza',    '⏰ Scadenza'),
+              ('attivazione', '📅 Data attivazione'),
+              ('giorni',      '⏳ Giorni rimanenti'),
+              ('server',      '🖥️ Server'),
+              ('richieste',   '📈 Richieste'),
+              ('schermi',     '🖥️ Schermi'),
+              ('note',        '📝 Note'),
+            ] %}
+            {% for key, label in plex_fields %}
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox"
+                     name="campiplex" value="{{ key }}"
+                     id="plex_{{ key }}"
+                     {% if not cur_plex or key in cur_plex %}checked{% endif %}>
+              <label class="form-check-label" for="plex_{{ key }}" style="font-size:.875rem;">
+                {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Jellyfin -->
+          <div style="flex:1; min-width:200px;">
+            <div style="font-size:.8rem; font-weight:700; color:#00a4dc; margin-bottom:10px; text-transform:uppercase; letter-spacing:.08em;">
+              <img src="{{ url_for('static', filename='jelly.png') }}" style="height:13px; margin-right:4px;">Jellyfin
+            </div>
+            <div class="mb-3">
+              <input type="text" class="form-control form-control-sm" name="frase_jelly"
+                     placeholder="Intestazione Jellyfin (opzionale)"
+                     value="{{ cur_frase_jelly }}">
+            </div>
+            {% set jelly_fields = [
+              ('username',    '👤 Username'),
+              ('password',    '🔑 Password'),
+              ('scadenza',    '⏰ Scadenza'),
+              ('attivazione', '📅 Data attivazione'),
+              ('giorni',      '⏳ Giorni rimanenti'),
+              ('server',      '💻 Host'),
+              ('http',        '🌍 HTTP'),
+              ('porta_http',  '🔌 Porta HTTP'),
+              ('https',       '🔐 HTTPS'),
+              ('porta_https', '🔐 Porta HTTPS'),
+              ('richieste',   '📈 Richieste'),
+              ('schermi',     '🖥️ Schermi'),
+              ('4k',          '🎬 4K'),
+              ('download',    '📥 Download'),
+              ('note',        '📝 Note'),
+            ] %}
+            {% for key, label in jelly_fields %}
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox"
+                     name="campijellyfin" value="{{ key }}"
+                     id="jelly_{{ key }}"
+                     {% if not cur_jelly or key in cur_jelly %}checked{% endif %}>
+              <label class="form-check-label" for="jelly_{{ key }}" style="font-size:.875rem;">
+                {{ label }}
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+
+        </div><!-- /flex row -->
+
+        <div style="margin-top:20px;">
+          <button type="submit" class="btn-submit">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Salva preferenze copia
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div><!-- /outer flex -->
+</div>
+
+<script>
+(function () {
+  const today = new Date(2026, 2, 16);
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function applyFmt(fmt) {
+    return fmt
+      .replace('%d', pad(today.getDate()))
+      .replace('%m', pad(today.getMonth() + 1))
+      .replace('%Y', today.getFullYear())
+      .replace('%y', String(today.getFullYear()).slice(-2));
+  }
+  const sel  = document.getElementById('formatodata');
+  const prev = document.getElementById('preview-value');
+  function updatePreview() { prev.textContent = applyFmt(sel.value); }
+  sel.addEventListener('change', updatePreview);
+  updatePreview();
+})();
+</script>
+{% endblock %}

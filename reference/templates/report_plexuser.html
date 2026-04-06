@@ -1,0 +1,25 @@
+{% extends "basev5.html" %}
+{% block title %}Report Creazione Utente Plex{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div style="max-width:600px; margin:0 auto;">
+    <div class="result-card" style="background:var(--bg-2); border:1px solid var(--border); border-radius:18px; padding:32px 28px; text-align:center;">
+      <div class="result-icon success" style="width:56px; height:56px; border-radius:50%; background:rgba(61,213,165,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:1.6rem; color:var(--teal);">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div style="font-size:1.1rem; font-weight:700; color:var(--txt); margin-bottom:8px;">Report Creazione Utente</div>
+      <div style="margin-bottom:20px;"><span class="pg-badge platform-plex">Plex</span></div>
+      <p style="color:var(--txt-soft); font-size:1rem; margin-bottom:28px;">{{ report_message }}</p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <a href="{{ url_for('putente', username=username) }}" class="act-btn act-success">
+          <i class="fa-solid fa-arrow-left fa-sm me-1"></i> Pagina Utente
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="act-btn act-neutral">
+          <i class="fa-solid fa-house fa-sm me-1"></i> Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

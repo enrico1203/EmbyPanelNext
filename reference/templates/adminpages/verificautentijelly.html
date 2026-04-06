@@ -1,0 +1,117 @@
+{% extends "basev5.html" %}
+
+{% block title %}Verifica utenti Jellyfin{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    <a href="{{ url_for('impostazioni') }}" class="pg-back"><i class="fa-solid fa-arrow-left"></i></a>
+    Verifica utenti Jellyfin
+    <span class="pg-badge" style="background:rgba(139,92,246,0.15); color:#a78bfa; border:1px solid rgba(139,92,246,0.25);">Superadmin</span>
+  </div>
+
+  <!-- Form selezione server -->
+  <div class="form-card" style="max-width:420px; margin-bottom:28px;">
+    <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--txt-soft); font-weight:700; margin-bottom:16px;">
+      <i class="fa-solid fa-server me-1"></i> Seleziona server
+    </div>
+    <form method="post">
+      <div class="mb-3">
+        <label for="server_nome" class="form-label">Server Jellyfin</label>
+        <select class="form-select" id="server_nome" name="server_nome" required>
+          {% for s in jelly_servers %}
+          <option value="{{ s }}" {% if selected_server == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-submit" style="background:#00a4dc;">
+        <i class="fa-solid fa-magnifying-glass me-1"></i> Calcola
+      </button>
+    </form>
+  </div>
+
+  {% if risultato is defined %}
+
+    {% if not solo_jelly and not solo_db %}
+    <!-- Tutto ok -->
+    <div style="display:flex; align-items:center; gap:12px; padding:16px 20px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:var(--radius); color:#34d399; font-weight:600; max-width:540px;">
+      <i class="fa-solid fa-circle-check fa-lg"></i>
+      Tutto a posto! Gli utenti del server <strong style="margin-left:4px;">{{ selected_server }}</strong> corrispondono al 100% con il database.
+    </div>
+
+    {% else %}
+
+    {% if solo_jelly %}
+    <!-- Utenti su Jellyfin ma NON nel DB -->
+    <div class="form-card" style="margin-bottom:24px;">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:#f87171; font-weight:700; margin-bottom:14px;">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+        Su Jellyfin ma NON nel database ({{ solo_jelly|length }})
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table table-dark table-hover table-sm mb-0" style="font-size:.875rem;">
+          <thead>
+            <tr style="color:var(--txt-soft); border-color:var(--border);">
+              <th>#</th>
+              <th>Username su Jellyfin</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in solo_jelly %}
+            <tr>
+              <td style="color:var(--txt-soft);">{{ loop.index }}</td>
+              <td style="color:#f87171; font-weight:600;">{{ u }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if solo_db %}
+    <!-- Utenti nel DB ma NON su Jellyfin -->
+    <div class="form-card">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:#fbbf24; font-weight:700; margin-bottom:14px;">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+        Nel database ma NON su Jellyfin ({{ solo_db|length }})
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table table-dark table-hover table-sm mb-0" style="font-size:.875rem;">
+          <thead>
+            <tr style="color:var(--txt-soft); border-color:var(--border);">
+              <th>#</th>
+              <th>Username nel DB</th>
+              <th>Scadenza (giorni)</th>
+              <th>Schermi</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in solo_db %}
+            <tr>
+              <td style="color:var(--txt-soft);">{{ loop.index }}</td>
+              <td style="color:#fbbf24; font-weight:600;">{{ u.user }}</td>
+              <td>{{ u.expiry }}</td>
+              <td>{{ u.schermi }}</td>
+              <td style="color:var(--txt-soft);">{{ u.nota or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+  {% endif %}
+
+  {% if errore %}
+  <div style="padding:14px 18px; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:var(--radius); color:#f87171; font-weight:600; max-width:540px;">
+    <i class="fa-solid fa-circle-xmark me-1"></i> {{ errore }}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "basev5.html" %}
+
+{% block title %}Modifica Utenti Plex{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Modifica Utenti Plex
+    <span class="pg-badge" style="background:rgba(229,160,13,0.15); color:#e5a00d; border:1px solid rgba(229,160,13,0.3);">Superadmin</span>
+  </div>
+
+  <div class="form-card" style="max-width:1400px;">
+    <div style="font-size:.83rem; color:var(--txt-soft); margin-bottom:16px;">
+      Editor tabella <code>User</code>. Le righe vuote non vengono salvate.
+    </div>
+
+    <form method="post" action="{{ url_for('impostazioni_utenti_plex') }}">
+      <div style="overflow:auto; border:1px solid var(--border); border-radius:var(--radius-sm);">
+        <table style="width:100%; min-width:1300px; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg-3); color:var(--txt-soft); font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;">
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Invito</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">ID</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Pmail</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Date</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Expiry</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Nschermi</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Server</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Fromuser</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Nota</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:center;">Elimina</th>
+            </tr>
+          </thead>
+          <tbody id="rowsPlexUsers">
+            {% for row in rows %}
+            <tr style="background:rgba(255,255,255,.02);">
+              <td style="padding:10px 12px; border-top:1px solid var(--border);">
+                <input type="hidden" name="old_invito[]" value="{{ row['invito'] }}">
+                <input type="number" class="form-control" name="invito[]" value="{{ row['invito'] }}">
+              </td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="id[]" value="{{ row['id'] if row['id'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="pmail[]" value="{{ row['pmail'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="date[]" value="{{ row['date'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="expiry[]" value="{{ row['expiry'] if row['expiry'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="nschermi[]" value="{{ row['nschermi'] if row['nschermi'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="server[]" value="{{ row['server'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="fromuser[]" value="{{ row['fromuser'] if row['fromuser'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="nota[]" value="{{ row['nota'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border); text-align:center;">
+                <input type="checkbox" class="form-check-input" name="delete_keys[]" value="{{ row['invito'] }}">
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" id="addRowPlexUsers" class="act-btn act-neutral">
+          <i class="fa-solid fa-plus me-1"></i> Aggiungi riga
+        </button>
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Salva modifiche
+        </button>
+        <a href="{{ url_for('impostazioni') }}" class="act-btn act-neutral">
+          <i class="fa-solid fa-arrow-left me-1"></i> Torna alle impostazioni
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById("addRowPlexUsers").addEventListener("click", function () {
+    const tbody = document.getElementById("rowsPlexUsers");
+    const tr = document.createElement("tr");
+    tr.style.background = "rgba(255,255,255,.02)";
+    tr.innerHTML = `
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="hidden" name="old_invito[]" value=""><input type="number" class="form-control" name="invito[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="id[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="pmail[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="date[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="expiry[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="nschermi[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="server[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="fromuser[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="nota[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border); text-align:center;">-</td>
+    `;
+    tbody.appendChild(tr);
+  });
+</script>
+{% endblock %}

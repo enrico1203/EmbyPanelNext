@@ -1,0 +1,275 @@
+{% extends "basev5.html" %}
+{% block title %}{{ username }} — Jellyfin{% endblock %}
+
+{% block content %}
+<style>
+  .upage { padding: 24px 22px 60px; }
+
+  .upage-back {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .8rem; font-weight: 600; color: var(--txt-muted);
+    text-decoration: none; padding: 5px 0; transition: color .15s;
+  }
+  .upage-back:hover { color: var(--txt); }
+  .upage-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em;
+    color: #f0f6ff; margin: 4px 0 2px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .upage-platform {
+    font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .18em;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(0,164,220,.14); color: #00a4dc;
+    border: 1px solid rgba(0,164,220,.32);
+  }
+  .upage-sub { font-size: .83rem; color: var(--txt-muted); margin-bottom: 22px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .act-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px;
+    font-size: .8rem; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: opacity .15s, transform .15s; font-family: inherit;
+  }
+  .act-btn:hover { opacity: .88; transform: translateY(-1px); }
+  .act-primary  { background: rgba(108,142,247,.18); color: #a5b8f8; border: 1px solid rgba(108,142,247,.35); }
+  .act-danger   { background: rgba(239,68,68,.18);   color: #f9a8a8; border: 1px solid rgba(239,68,68,.35); }
+  .act-warning  { background: rgba(245,184,75,.18);  color: var(--gold); border: 1px solid rgba(245,184,75,.35); }
+  .act-teal     { background: rgba(61,213,165,.16);  color: var(--teal); border: 1px solid rgba(61,213,165,.32); }
+  .act-success  { background: rgba(34,197,94,.16);   color: #86efac; border: 1px solid rgba(34,197,94,.32); }
+  .act-neutral  { background: var(--bg-3); color: var(--txt-soft); border: 1px solid var(--border-2); }
+  .act-copy     { background: var(--bg-3); color: var(--txt-soft); border: 1px solid var(--border-2); }
+
+  .detail-card {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 18px; overflow: hidden; margin-bottom: 16px;
+  }
+  .detail-card-header {
+    display: flex; align-items: center; gap: 9px;
+    padding: 14px 18px; background: var(--bg-3);
+    border-bottom: 1px solid var(--border);
+    font-size: .82rem; font-weight: 700; color: var(--txt-soft);
+    text-transform: uppercase; letter-spacing: .1em;
+  }
+  .detail-row {
+    display: grid; grid-template-columns: 180px 1fr;
+    align-items: center; padding: 11px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: .875rem; transition: background .12s;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row:hover { background: rgba(255,255,255,.025); }
+  .detail-key {
+    color: var(--txt-muted); font-weight: 600;
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .09em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-val { color: var(--txt); font-weight: 500; word-break: break-all; }
+  .detail-val.accent { color: #00a4dc; font-weight: 700; }
+
+  .expiry-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 10px; border-radius: 999px;
+    font-size: .75rem; font-weight: 700;
+  }
+  .expiry-ok   { background: rgba(61,213,165,.12); color: var(--teal); border: 1px solid rgba(61,213,165,.28); }
+  .expiry-warn { background: rgba(245,184,75,.12);  color: var(--gold); border: 1px solid rgba(245,184,75,.28); }
+  .expiry-dead { background: rgba(239,68,68,.12);   color: #f87171;     border: 1px solid rgba(239,68,68,.28); }
+
+  @media (max-width: 640px) {
+    .upage { padding: 14px 12px 48px; }
+    .detail-row { grid-template-columns: 1fr; gap: 2px; padding: 10px 14px; }
+  }
+  /* ── Light theme overrides ── */
+  [data-theme="light"] .upage-title      { color: var(--txt); }
+  [data-theme="light"] .act-primary      { color: #3d55b0; border-color: rgba(61,85,176,.4); }
+  [data-theme="light"] .act-danger       { color: #991b1b; border-color: rgba(239,68,68,.35); }
+  [data-theme="light"] .act-success      { color: #166534; border-color: rgba(34,197,94,.35); }
+  [data-theme="light"] .expiry-dead      { color: #b91c1c; }
+  [data-theme="light"] .detail-row:hover { background: rgba(0,0,0,.03); }
+</style>
+
+<div class="upage">
+
+  <a href="{{ url_for('listajelly') }}" class="upage-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Lista Jellyfin
+  </a>
+  <div class="upage-title">
+    {{ username }}
+    <span class="upage-platform">Jellyfin</span>
+  </div>
+  <div class="upage-sub">Dettagli e gestione account</div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <a href="{{ url_for('jrinnova', username=username) }}" class="act-btn act-primary">
+      <i class="fa-solid fa-rotate-right"></i> Rinnova
+    </a>
+    <a href="{{ url_for('jcancella', username=username) }}" class="act-btn act-danger">
+      <i class="fa-solid fa-trash"></i> Cancella
+    </a>
+    <a href="{{ url_for('jtogli4k', username=username) }}" class="act-btn act-warning">
+      <i class="fa-solid fa-film"></i> Togli 4K
+    </a>
+    <a href="{{ url_for('jmetti4k', username=username) }}" class="act-btn act-teal">
+      <i class="fa-solid fa-film"></i> Metti 4K
+    </a>
+    <a href="{{ url_for('jpasswordch', username=username) }}" class="act-btn act-success">
+      <i class="fa-solid fa-key"></i> Cambia Password
+    </a>
+    <a href="{{ url_for('modificanota_jelly', username=username) }}" class="act-btn act-neutral">
+      <i class="fa-solid fa-pen-to-square"></i> Nota
+    </a>
+    <button id="copyInfo" class="act-btn act-copy">
+      <i class="fa-solid fa-clipboard"></i> Copia info
+    </button>
+  </div>
+
+  <!-- Detail card -->
+  <div class="detail-card">
+    <div class="detail-card-header">
+      <i class="fa-solid fa-circle-info"></i> Dettagli utente Jellyfin
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-at"></i> Username</span>
+      <span class="detail-val accent">{{ username }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-key"></i> Password</span>
+      <span class="detail-val">{{ password_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-calendar-plus"></i> Creazione</span>
+      <span class="detail-val">{{ date_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-calendar-xmark"></i> Scadenza</span>
+      <span class="detail-val">{{ expiry_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-hourglass-half"></i> Giorni rimanenti</span>
+      <span class="detail-val">
+        {% set giorni = giorni_rimanenti | int %}
+        <span class="expiry-badge {% if giorni > 7 %}expiry-ok{% elif giorni > 0 %}expiry-warn{% else %}expiry-dead{% endif %}">
+          <i class="fa-solid fa-clock fa-xs"></i> {{ giorni_rimanenti }}
+        </span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-server"></i> Server</span>
+      <span class="detail-val">{{ server_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-desktop"></i> Nome (host)</span>
+      <span class="detail-val">{{ nomeserver }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-globe"></i> Indirizzo HTTP</span>
+      <span class="detail-val">{{ indirizzoweb }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-door-open"></i> Porta HTTP</span>
+      <span class="detail-val">{{ porta }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-lock"></i> Indirizzo HTTPS</span>
+      <span class="detail-val">{{ indirizzoweb_https }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-lock"></i> Porta HTTPS</span>
+      <span class="detail-val">{{ porta_https }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-link"></i> Richieste</span>
+      <span class="detail-val">{{ richieste }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-display"></i> Schermi</span>
+      <span class="detail-val">{{ schermi_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-film"></i> 4K</span>
+      <span class="detail-val">{{ k4_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-download"></i> Download</span>
+      <span class="detail-val">{{ download_val }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key"><i class="fa-solid fa-note-sticky"></i> Note</span>
+      <span class="detail-val">{{ nota_val or '—' }}</span>
+    </div>
+  </div>
+
+</div><!-- /upage -->
+
+<!-- Modal conferma cancellazione -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Conferma Cancellazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                style="filter:invert(1) brightness(.6);"></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById("copyInfo").addEventListener("click", function() {
+  const copyPrefs = {{ copy_prefs | tojson }};
+  const parts = copyPrefs ? copyPrefs.split('|') : [];
+  const frase       = (parts[4] || '').replace(/\\n/g, '\n');
+  const selectedRaw = parts[5] || '';
+  const selected    = selectedRaw ? selectedRaw.split(',').filter(Boolean) : null;
+
+  const ALL_FIELDS = [
+    { key: 'username',    line: '👤 Username: {{ username }}' },
+    { key: 'password',    line: '🔑 Password: {{ password_val }}' },
+    { key: 'scadenza',    line: '⏰ Scadenza: {{ expiry_val }}' },
+    { key: 'attivazione', line: '📅 Attivazione: {{ date_val }}' },
+    { key: 'giorni',      line: '⏳ Giorni rimanenti: {{ giorni_rimanenti }}' },
+    { key: 'server',      line: '💻 Host: {{ nomeserver }}' },
+    { key: 'http',        line: '🌍 HTTP: {{ indirizzoweb }}' },
+    { key: 'porta_http',  line: '🔌 Porta HTTP: {{ porta }}' },
+    { key: 'https',       line: '🔐 HTTPS: {{ indirizzoweb_https }}' },
+    { key: 'porta_https', line: '🔐 Porta HTTPS: {{ porta_https }}' },
+    { key: 'richieste',   line: '📈 Richieste: {{ richieste }}' },
+    { key: 'schermi',     line: '🖥️ Schermi: {{ schermi_val }}' },
+    { key: '4k',          line: '🎬 4K: {{ k4_val }}' },
+    { key: 'download',    line: '📥 Download: {{ download_val }}' },
+    { key: 'note',        line: '📝 Note: {{ nota_val }}' },
+  ];
+
+  const lines = [];
+  if (frase) {
+    lines.push(frase);
+  } else {
+    lines.push('📊 Dettagli account Jellyfin:');
+  }
+  lines.push('');
+
+  const activeFields = selected && selected.length
+    ? ALL_FIELDS.filter(f => selected.includes(f.key))
+    : ALL_FIELDS;
+
+  activeFields.forEach(f => lines.push(f.line));
+
+  navigator.clipboard.writeText(lines.join('\n')).then(function() {
+    var btn = document.getElementById("copyInfo");
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiato!';
+    btn.style.color = 'var(--teal)';
+    setTimeout(function() { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+  });
+});
+</script>
+{% endblock %}

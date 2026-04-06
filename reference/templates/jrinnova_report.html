@@ -1,0 +1,20 @@
+{% extends "basev5.html" %}
+{% block title %}Report Rinnovo Jellyfin{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div style="max-width:600px; margin:0 auto;">
+    <div class="result-card" style="background:var(--bg-2); border:1px solid var(--border); border-radius:18px; padding:32px 28px; text-align:center;">
+      <div class="result-icon" style="width:56px; height:56px; border-radius:50%; background:rgba(0,164,220,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:1.6rem; color:#00a4dc;">
+        <i class="fa-solid fa-file-lines"></i>
+      </div>
+      <div style="font-size:1.1rem; font-weight:700; color:var(--txt); margin-bottom:8px;">Report Operazione</div>
+      <div style="margin-bottom:16px;"><span class="pg-badge platform-jelly">Jellyfin</span></div>
+      <pre class="result-msg" style="background:var(--bg-3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; text-align:left; color:var(--txt-soft); font-size:.875rem; white-space:pre-wrap; word-break:break-word; margin-bottom:24px;">{{ report_message | safe }}</pre>
+      <a href="{{ url_for('listajelly') }}" class="act-btn act-teal">
+        <i class="fa-solid fa-arrow-left fa-sm me-1"></i> Torna alla Lista
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

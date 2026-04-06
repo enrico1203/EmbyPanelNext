@@ -1,0 +1,31 @@
+{% extends "basev5.html" %}
+{% block title %}Utenti Emby di {{ idtelegram }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('subseller_detail', idtelegram=idtelegram) }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Dettagli
+  </a>
+
+  <div class="pg-title">
+    Utenti Emby di {{ idtelegram }}
+    <span class="pg-badge platform-emby">Emby</span>
+  </div>
+
+  <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:18px; overflow:hidden;">
+    <div class="table-responsive">
+      {{ table_html | safe }}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var table = document.querySelector("table");
+    if (!table) return;
+    table.classList.add("table", "table-dark", "table-striped", "table-hover", "mb-0");
+  });
+</script>
+{% endblock %}

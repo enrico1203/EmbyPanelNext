@@ -1,0 +1,95 @@
+{% extends "basev5.html" %}
+{% block title %}Rinnova Plex – {{ username }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('putente', username=username) }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna all'utente
+  </a>
+
+  <div class="pg-title">
+    Rinnova Plex – {{ username }}
+    <span class="pg-badge platform-plex">Plex</span>
+  </div>
+  <div style="font-size:.82rem; color:var(--txt-soft); margin-bottom:10px;">
+    Piano attuale: <span style="color:#e5a00d; font-weight:700;">{{ schermi_plex }} schermi</span>
+  </div>
+
+  <div class="form-card" style="max-width:480px;">
+    <form method="post"
+          action="{{ url_for('rinnova_plex', username=username) }}"
+          id="rinnovaPlexForm"
+          autocomplete="off"
+          novalidate>
+
+      <div class="mb-3">
+        <label for="renew_days" class="form-label">
+          <i class="fa-solid fa-calendar-days me-1"></i>
+          Quanti giorni vuoi rinnovare?
+        </label>
+        <input type="number"
+               class="form-control"
+               id="renew_days"
+               name="renew_days"
+               required
+               min="0"
+               placeholder="Inserisci numero di giorni">
+        <div class="invalid-feedback">
+          Inserisci un numero maggiore o uguale a 0.
+        </div>
+      </div>
+
+      <!-- Prezzo rinnovo -->
+      <div class="mb-4" style="background:var(--bg-3); border:1px solid var(--border-2); border-radius:var(--radius-sm); padding:16px 20px;">
+        <div style="font-size:.8rem; color:var(--txt-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Prezzo Rinnovo</div>
+        <div style="font-size:2rem; font-weight:700; color:var(--gold); line-height:1.1;">
+          <span id="renewPrice">0</span> <span style="font-size:1rem; color:var(--txt-soft);">€</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <i class="fa-solid fa-rotate me-1"></i> Rinnova
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Percentuale di incremento passata dal backend
+  const incremento = {{ incremento }};
+  const prezzoMensile = {{ prezzo_mensile }};
+
+  function updatePrice() {
+    let days = parseInt(document.getElementById('renew_days').value, 10) || 0;
+
+    // Calcola prezzo base mensile -> giornaliero -> totale giorni
+    const basePrice = (prezzoMensile * 12 / 365) * days;
+    const finalPrice = Math.round(
+      (basePrice * (1 + incremento / 100)) * 100
+    ) / 100;
+
+    document.getElementById('renewPrice').innerText = finalPrice;
+  }
+
+  // Validazione HTML5 bootstrap
+  (function() {
+    'use strict';
+    const form = document.getElementById('rinnovaPlexForm');
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  })();
+
+  document.getElementById('renew_days')
+          .addEventListener('input', updatePrice);
+
+  // Inizializza
+  updatePrice();
+</script>
+{% endblock %}

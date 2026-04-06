@@ -1,0 +1,42 @@
+services:
+  nextbackend:
+    container_name: nextbackend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "9091:9091"
+    env_file:
+      - .env
+    networks:
+      - nextpanel
+    restart: unless-stopped
+
+  nextfrontend:
+    container_name: nextfrontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - nextpanel
+    restart: unless-stopped
+    depends_on:
+      - nextbackend
+
+  cloudflared:
+    container_name: nextcloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token eyJhIjoiYjNlZTcyZTc4NGVkY2RlNTZkYTA1YzcxMjVmZDM3NzEiLCJ0IjoiZmY1YzdhM2YtYTJlNi00OWE0LWIwNTctMGMwMjg1YmZlMmVkIiwicyI6Ill6TmxOREprTm1RdE5UZzFaaTAwWWpjMkxXSm1OMlF0T1dGa1lqZ3dNVFEyTVRRMyJ9
+    networks:
+      - nextpanel
+    restart: unless-stopped
+    depends_on:
+      - nextbackend
+      - nextfrontend
+
+networks:
+  nextpanel:
+    name: nextpanel
+    driver: bridge

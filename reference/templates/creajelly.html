@@ -1,0 +1,165 @@
+{% extends "basev5.html" %}
+{% block title %}Crea Utente Jellyfin{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Crea Utente
+    <span class="pg-badge platform-jelly">Jellyfin</span>
+  </div>
+
+  <div class="form-card" style="max-width:560px;">
+    <!-- Dummy fields per autocomplete di Chrome -->
+    <input type="text" name="fakeusernameremembered" style="display:none">
+    <input type="text" name="fakepasswordremembered" style="display:none">
+
+    <form method="post" action="{{ url_for('creajelly') }}" autocomplete="off" novalidate>
+      <!-- Username -->
+      <div class="mb-3">
+        <label for="username_custom" class="form-label">Username</label>
+        <input type="text"
+               class="form-control"
+               id="username_custom"
+               name="username_custom"
+               required minlength="3"
+               pattern="[A-Za-z0-9]+"
+               title="Solo lettere e numeri, minimo 3 caratteri"
+               placeholder="Inserisci username"
+               autocomplete="new-username">
+        <div class="invalid-feedback">
+          Inserisci almeno 3 caratteri con sole lettere e numeri.
+        </div>
+      </div>
+
+      <!-- Password (in chiaro) -->
+      <div class="mb-3">
+        <label for="password_custom" class="form-label">Password</label>
+        <input type="text"
+               class="form-control"
+               id="password_custom"
+               name="password_custom"
+               required minlength="3"
+               placeholder="Inserisci password"
+               autocomplete="new-password">
+        <div class="invalid-feedback">
+          Inserisci almeno 5 caratteri.
+        </div>
+      </div>
+
+      <!-- Server (solo superadmin) -->
+      {% if usertype == 'superadmin' %}
+      <div class="mb-3">
+        <label for="server_value" class="form-label">Server</label>
+        <select class="form-select"
+                id="server_value"
+                name="server_value"
+                required>
+          {% for s in jelly_servers %}
+          <option value="{{ s }}" {% if loop.first %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="idtelegram" class="form-label">ID Telegram</label>
+        <input type="text"
+               class="form-control"
+               id="idtelegram"
+               name="idtelegram"
+               required minlength="3"
+               placeholder="Inserisci ID Telegram">
+      </div>
+      {% endif %}
+
+      <!-- Scadenza (in giorni) -->
+      <div class="mb-3">
+        <label for="expiry_days" class="form-label">Scadenza (in giorni)</label>
+        <input type="number"
+               class="form-control"
+               id="expiry_days"
+               name="expiry_days"
+               required min="1"
+               placeholder="Inserisci numero di giorni">
+        <div class="invalid-feedback">
+          Il numero di giorni deve essere maggiore di 0.
+        </div>
+      </div>
+
+      <!-- Numero di streaming -->
+      <div class="mb-3">
+        <label for="streaming" class="form-label">Streaming contemporanei</label>
+        <select class="form-select"
+                id="streaming"
+                name="streaming"
+                required>
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+
+      <!-- Prezzo operazione -->
+      <div class="mb-4" style="background:var(--bg-3); border:1px solid var(--border-2); border-radius:var(--radius-sm); padding:16px 20px;">
+        <div style="font-size:.8rem; color:var(--txt-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Prezzo operazione</div>
+        <div style="font-size:2rem; font-weight:700; color:var(--gold); line-height:1.1;">
+          <span id="operationPrice">0</span> <span style="font-size:1rem; color:var(--txt-soft);">€</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitButton" disabled>
+        <i class="fa-solid fa-user-plus me-1"></i> Crea Utente
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Prezzi passati dal server (assicurati che prezzo1..4 siano numeri)
+  const prezzo = {
+    normale: [{{ prezzo1|default(0) }}, {{ prezzo2|default(0) }}, {{ prezzo3|default(0) }}, {{ prezzo4|default(0) }}]
+  };
+
+  function updateOperationPrice() {
+    const streamsEl = document.getElementById("streaming");
+    const daysEl    = document.getElementById("expiry_days");
+
+    const streams = parseInt(streamsEl.value, 10);
+    let days = parseInt(daysEl.value, 10);
+    if (isNaN(days) || days < 1) days = 0;
+
+    const base = prezzo.normale[streams - 1] || 0;
+
+    // Prezzo giornaliero (12 mesi ~ 365 giorni)
+    const daily = (base * 12) / 365;
+    let total = Math.round(daily * days * 100) / 100;
+
+    // Soglia minima di 4 giorni
+    if (days < 4) total = 0;
+
+    document.getElementById("operationPrice").innerText = total.toFixed(2);
+  }
+
+  function validateForm() {
+    const form = document.querySelector("form");
+    const btn  = document.getElementById("submitButton");
+    btn.disabled = !form.checkValidity();
+    form.classList.add("was-validated");
+  }
+
+  // Event listeners (tolto "server_type" perché non esiste più)
+  ["streaming", "expiry_days"].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener("change", updateOperationPrice);
+    el.addEventListener("input", updateOperationPrice);
+  });
+
+  document.addEventListener("input", validateForm);
+  document.addEventListener("DOMContentLoaded", () => {
+    updateOperationPrice();
+    validateForm();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "basev5.html" %}
+
+{% block title %}Modifica Utenti Jellyfin{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Modifica Utenti Jellyfin
+    <span class="pg-badge" style="background:rgba(0,164,220,0.15); color:#00a4dc; border:1px solid rgba(0,164,220,0.3);">Superadmin</span>
+  </div>
+
+  <div class="form-card" style="max-width:1500px;">
+    <div style="font-size:.83rem; color:var(--txt-soft); margin-bottom:16px;">
+      Editor tabella <code>jUser</code>. Le righe vuote non vengono salvate.
+    </div>
+
+    <form method="post" action="{{ url_for('impostazioni_utenti_jelly') }}">
+      <div style="overflow:auto; border:1px solid var(--border); border-radius:var(--radius-sm);">
+        <table style="width:100%; min-width:1450px; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg-3); color:var(--txt-soft); font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;">
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Invito</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">ID</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">User</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Date</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Expiry</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Server</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Schermi</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">4K</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Download</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Password</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:left;">Nota</th>
+              <th style="padding:12px 14px; border-bottom:1px solid var(--border-2); text-align:center;">Elimina</th>
+            </tr>
+          </thead>
+          <tbody id="rowsJellyUsers">
+            {% for row in rows %}
+            <tr style="background:rgba(255,255,255,.02);">
+              <td style="padding:10px 12px; border-top:1px solid var(--border);">
+                <input type="hidden" name="old_invito[]" value="{{ row['invito'] }}">
+                <input type="number" class="form-control" name="invito[]" value="{{ row['invito'] }}">
+              </td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="id[]" value="{{ row['id'] if row['id'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="user[]" value="{{ row['user'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="date[]" value="{{ row['date'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="expiry[]" value="{{ row['expiry'] if row['expiry'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="server[]" value="{{ row['server'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="schermi[]" value="{{ row['schermi'] if row['schermi'] is not none else '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);">
+                <select class="form-select" name="k4[]">
+                  <option value="false" {% if (row['4k'] or 'false')|lower != 'true' %}selected{% endif %}>false</option>
+                  <option value="true" {% if (row['4k'] or '')|lower == 'true' %}selected{% endif %}>true</option>
+                </select>
+              </td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);">
+                <select class="form-select" name="download[]">
+                  <option value="false" {% if (row['download'] or 'false')|lower != 'true' %}selected{% endif %}>false</option>
+                  <option value="true" {% if (row['download'] or '')|lower == 'true' %}selected{% endif %}>true</option>
+                </select>
+              </td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="password[]" value="{{ row['password'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="nota[]" value="{{ row['nota'] or '' }}"></td>
+              <td style="padding:10px 12px; border-top:1px solid var(--border); text-align:center;">
+                <input type="checkbox" class="form-check-input" name="delete_keys[]" value="{{ row['invito'] }}">
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" id="addRowJellyUsers" class="act-btn act-neutral">
+          <i class="fa-solid fa-plus me-1"></i> Aggiungi riga
+        </button>
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Salva modifiche
+        </button>
+        <a href="{{ url_for('impostazioni') }}" class="act-btn act-neutral">
+          <i class="fa-solid fa-arrow-left me-1"></i> Torna alle impostazioni
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById("addRowJellyUsers").addEventListener("click", function () {
+    const tbody = document.getElementById("rowsJellyUsers");
+    const tr = document.createElement("tr");
+    tr.style.background = "rgba(255,255,255,.02)";
+    tr.innerHTML = `
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="hidden" name="old_invito[]" value=""><input type="number" class="form-control" name="invito[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="id[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="user[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="date[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="expiry[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="server[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="number" class="form-control" name="schermi[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><select class="form-select" name="k4[]"><option value="false" selected>false</option><option value="true">true</option></select></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><select class="form-select" name="download[]"><option value="false" selected>false</option><option value="true">true</option></select></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="password[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border);"><input type="text" class="form-control" name="nota[]" value=""></td>
+      <td style="padding:10px 12px; border-top:1px solid var(--border); text-align:center;">-</td>
+    `;
+    tbody.appendChild(tr);
+  });
+</script>
+{% endblock %}

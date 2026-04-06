@@ -1,0 +1,43 @@
+{% extends "basev5.html" %}
+{% block title %}Ricarica Reseller {{ idtelegram }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('reseller_detail', idtelegram=idtelegram) }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Dettagli
+  </a>
+
+  <div class="pg-title">
+    Ricarica Reseller: {{ idtelegram }}
+  </div>
+
+  <div class="form-card" style="max-width:460px;">
+    <form method="post" action="{{ url_for('ricaricareseller', idtelegram=idtelegram) }}" autocomplete="off" id="ricaricaForm">
+      <div class="mb-4">
+        <label for="amount" class="form-label">
+          <i class="fa-solid fa-coins me-1"></i> Quanti soldi caricare?
+        </label>
+        <input type="number" class="form-control" id="amount" name="amount" required min="1" placeholder="Inserisci importo">
+        <div class="invalid-feedback">
+          Inserisci un valore maggiore di 0.
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="submitRicarica">
+        <i class="fa-solid fa-coins me-1"></i> Ricarica
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById("ricaricaForm").addEventListener("submit", function(e) {
+    var amount = document.getElementById("amount").value;
+    if (parseFloat(amount) <= 0 || isNaN(parseFloat(amount))) {
+      e.preventDefault();
+      document.getElementById("amount").classList.add("is-invalid");
+    }
+  });
+</script>
+{% endblock %}

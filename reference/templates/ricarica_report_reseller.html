@@ -1,0 +1,18 @@
+{% extends "basev5.html" %}
+{% block title %}Report Ricarica Reseller{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div style="max-width:700px; margin:0 auto;">
+    <div class="pg-title" style="margin-bottom:20px;">Report Ricarica Reseller</div>
+
+    <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:18px; padding:24px 28px; margin-bottom:20px;">
+      {{ report_message | safe }}
+    </div>
+
+    <a href="{{ url_for('reseller_detail', idtelegram=idtelegram) }}" class="pg-back">
+      <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Dettagli Reseller
+    </a>
+  </div>
+</div>
+{% endblock %}

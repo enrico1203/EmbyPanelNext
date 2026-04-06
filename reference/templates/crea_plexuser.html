@@ -1,0 +1,148 @@
+{% extends "basev5.html" %}
+{% block title %}Crea Utente Plex{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Crea Utente
+    <span class="pg-badge platform-plex">Plex</span>
+  </div>
+
+  <!-- Avviso obbligatorio -->
+  <div class="plex-avviso" style="background:rgba(239,68,68,0.14); border:1px solid rgba(239,68,68,0.35); border-radius:var(--radius-sm); padding:14px 18px; margin-bottom:14px; color:#fca5a5; font-weight:600; text-align:center;">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    OBBLIGATORIO: Prima di fare l'invito ad una mail, questa deve essere registrata su
+    <a href="https://app.plex.tv" target="_blank" rel="noopener" style="color:#fca5a5;">app.plex.tv</a>;
+    altrimenti viene perso il credito e l'utente.
+  </div>
+
+  <!-- Avviso email temporanee -->
+  <div style="background:rgba(245,184,75,0.12); border:1px solid rgba(245,184,75,0.3); border-radius:var(--radius-sm); padding:14px 18px; margin-bottom:24px; color:var(--gold); font-weight:600; text-align:center;">
+    <i class="fa-solid fa-ban me-2"></i>
+    Vietato: usare email temporanee come tempmail o simili. L'utente deve avere accesso alla mail per ricevere gli inviti e gli annunci di Plex.
+  </div>
+
+  <div class="form-card" style="max-width:560px;">
+    <form method="post"
+          action="{{ url_for('crea_plexuser') }}"
+          autocomplete="off"
+          id="creaPlexUserForm"
+          novalidate>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">
+          <i class="fa-solid fa-envelope me-1"></i> Email
+        </label>
+        <input type="email"
+               class="form-control"
+               id="email"
+               name="email"
+               required
+               placeholder="Inserisci l'email Gmail (es. nome@gmail.com)">
+        <div class="invalid-feedback" id="email-feedback">
+          È accettata solo un'email Gmail (@gmail.com).
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="idtelegram" class="form-label">
+          <i class="fa-solid fa-tag me-1"></i> ID Telegram
+        </label>
+        {% if is_superadmin %}
+        <input type="text"
+               class="form-control"
+               id="idtelegram"
+               name="idtelegram"
+               required
+               inputmode="numeric"
+               pattern="[0-9]+"
+               title="Inserisci solo numeri"
+               placeholder="Inserisci ID Telegram">
+        <div class="invalid-feedback">
+          Il campo ID Telegram è obbligatorio.
+        </div>
+        {% else %}
+        <input type="text"
+               class="form-control"
+               id="idtelegram"
+               name="idtelegram"
+               value="{{ current_user }}"
+               readonly
+               style="opacity:0.7; cursor:not-allowed;">
+        <div class="form-text" style="color:var(--txt-soft);">
+          <i class="fa-solid fa-lock fa-xs me-1"></i> Il tuo ID Telegram viene compilato automaticamente.
+        </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn" disabled>
+        <i class="fa-solid fa-paper-plane me-1"></i> Invia invito
+      </button>
+    </form>
+  </div>
+
+  <div style="margin-top:20px;">
+    <a href="{{ url_for('dashboard') }}" class="pg-back">
+      <i class="fa-solid fa-arrow-left fa-sm"></i> Torna alla Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  [data-theme="light"] .plex-avviso,
+  [data-theme="light"] .plex-avviso a { color: #991b1b !important; }
+</style>
+<script>
+  (function() {
+    "use strict";
+    const form      = document.getElementById("creaPlexUserForm");
+    const emailInput = document.getElementById("email");
+    const submitBtn  = document.getElementById("submitBtn");
+    const feedback   = document.getElementById("email-feedback");
+
+    function isGmail(val) {
+      return /^[^\s@]+@gmail\.com$/i.test(val.trim());
+    }
+
+    function updateEmailState() {
+      const val = emailInput.value.trim();
+      if (val === "") {
+        emailInput.classList.remove("is-valid", "is-invalid");
+        submitBtn.disabled = true;
+      } else if (isGmail(val)) {
+        emailInput.classList.remove("is-invalid");
+        emailInput.classList.add("is-valid");
+        submitBtn.disabled = false;
+      } else {
+        emailInput.classList.remove("is-valid");
+        emailInput.classList.add("is-invalid");
+        feedback.textContent = "È accettata solo un'email Gmail (@gmail.com).";
+        submitBtn.disabled = true;
+      }
+    }
+
+    emailInput.addEventListener("input", updateEmailState);
+    emailInput.addEventListener("blur",  updateEmailState);
+
+    form.addEventListener("submit", function(e) {
+      if (!isGmail(emailInput.value)) {
+        emailInput.classList.add("is-invalid");
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      {% if is_superadmin %}
+      const idtelegram = form.idtelegram;
+      if (!idtelegram.value.trim()) {
+        idtelegram.classList.add("is-invalid");
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      {% endif %}
+      form.classList.add("was-validated");
+    }, false);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,712 @@
+{% extends "basev5.html" %}
+{% block title %}Dashboard Reseller{% endblock %}
+
+{% block content %}
+<style>
+  /* ─── Fonts ──────────────────────────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  /* ─── Dashboard wrapper ──────────────────────────────────── */
+  .dash {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    padding: 28px 22px 64px;
+    min-height: 100%;
+  }
+
+  /* ─── Section spacing ────────────────────────────────────── */
+  .dash-section { margin-bottom: 24px; }
+
+  /* ══════════════ HERO ══════════════ */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 38px 36px 34px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+  }
+
+  /* Animated glow mesh */
+  .hero-mesh {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 90% 90% at -5% -10%, rgba(245,184,75,.22), transparent 58%),
+      radial-gradient(ellipse 70% 70% at 105% -5%, rgba(61,213,165,.15), transparent 52%),
+      radial-gradient(ellipse 50% 50% at 55% 110%, rgba(108,142,247,.10), transparent 60%);
+    animation: meshPulse 9s ease-in-out infinite alternate;
+  }
+  @keyframes meshPulse {
+    from { opacity: .85; transform: scale(1); }
+    to   { opacity: 1;   transform: scale(1.05); }
+  }
+
+  /* Decorative blobs */
+  .hero-blob {
+    position: absolute; z-index: 0;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .hero-blob-1 {
+    width: 260px; height: 260px;
+    background: rgba(245,184,75,.13);
+    top: -80px; right: 10%;
+  }
+  .hero-blob-2 {
+    width: 180px; height: 180px;
+    background: rgba(61,213,165,.09);
+    bottom: -60px; right: 30%;
+  }
+
+  .hero-body { position: relative; z-index: 1; }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 13px;
+    border-radius: 999px;
+    background: rgba(245,184,75,.1);
+    border: 1px solid rgba(245,184,75,.28);
+    font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .2em;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: clamp(1.9rem, 2.8vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.12;
+    color: #f0f6ff;
+    margin-bottom: 8px;
+  }
+
+  .hero-sub {
+    font-size: .95rem;
+    color: var(--txt-muted);
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+  .hero-sub b { color: var(--gold); font-weight: 700; }
+
+  /* Saldo display */
+  .hero-saldo {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 2px; flex-shrink: 0;
+  }
+  .hero-saldo-label {
+    font-size: .7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .14em;
+    color: var(--txt-muted);
+  }
+  .hero-saldo-value {
+    font-size: 2.6rem; font-weight: 800;
+    letter-spacing: -.04em; line-height: 1;
+    color: var(--gold);
+  }
+  .hero-saldo-currency {
+    font-size: .95rem; font-weight: 500;
+    color: var(--txt-soft); margin-left: 3px;
+    vertical-align: super;
+  }
+
+  /* ══════════════ STAT CARDS ══════════════ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 20px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 14px;
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    cursor: default;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--c, var(--gold));
+    opacity: .8;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 70% at 100% 0%, var(--c-glow, rgba(245,184,75,.06)), transparent 65%);
+    pointer-events: none;
+  }
+  .stat-card:hover {
+    border-color: var(--border-2);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.4);
+  }
+
+  .stat-top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stat-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: var(--ic-bg, rgba(245,184,75,.12));
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem;
+    color: var(--c, var(--gold));
+  }
+  .stat-badge {
+    font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--badge-bg, rgba(245,184,75,.1));
+    color: var(--c, var(--gold));
+  }
+
+  .stat-val {
+    font-size: 2.1rem; font-weight: 800;
+    letter-spacing: -.04em; line-height: 1;
+    color: #f0f6ff;
+  }
+  .stat-label {
+    font-size: .72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .12em;
+    color: var(--txt-muted);
+  }
+
+  /* ══════════════ SERVER STATUS ══════════════ */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .srv-card {
+    border-radius: 18px;
+    padding: 20px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    transition: border-color .2s;
+  }
+  .srv-card:hover { border-color: var(--border-2); }
+
+  .srv-head {
+    display: flex; align-items: center; gap: 9px;
+    margin-bottom: 12px;
+  }
+
+  .pulse {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 0 rgba(61,213,165,.45);
+    animation: pulseAnim 2.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .pulse.gold {
+    background: var(--gold);
+    box-shadow: 0 0 0 0 rgba(245,184,75,.45);
+    animation-name: pulseGold;
+  }
+  @keyframes pulseAnim {
+    0%   { box-shadow: 0 0 0 0   rgba(61,213,165,.45); }
+    70%  { box-shadow: 0 0 0 9px rgba(61,213,165,0);   }
+    100% { box-shadow: 0 0 0 0   rgba(61,213,165,0);   }
+  }
+  @keyframes pulseGold {
+    0%   { box-shadow: 0 0 0 0   rgba(245,184,75,.45); }
+    70%  { box-shadow: 0 0 0 9px rgba(245,184,75,0);   }
+    100% { box-shadow: 0 0 0 0   rgba(245,184,75,0);   }
+  }
+
+  .srv-title { font-weight: 700; font-size: .88rem; color: var(--txt); }
+
+  .srv-chip {
+    margin-left: auto;
+    font-size: .62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .12em;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--teal-dim);
+    color: var(--teal);
+    border: 1px solid rgba(61,213,165,.28);
+  }
+  .srv-chip.gold-chip {
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-color: rgba(245,184,75,.28);
+  }
+
+  .srv-body {
+    font-size: .84rem;
+    color: var(--txt-soft);
+    white-space: pre-line;
+    line-height: 1.65;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-2) transparent;
+  }
+  .srv-body::-webkit-scrollbar { width: 3px; }
+  .srv-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+  /* ══════════════ MEDIA CARDS ══════════════ */
+  .media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .media-card {
+    border-radius: 18px;
+    padding: 20px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    transition: border-color .2s;
+  }
+  .media-card:hover { border-color: var(--border-2); }
+
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-head-title {
+    font-size: .92rem; font-weight: 700; color: var(--txt);
+  }
+  .chip {
+    font-size: .62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .12em;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--gold-dim);
+    color: var(--gold);
+    border: 1px solid rgba(245,184,75,.28);
+  }
+
+  .cat-img {
+    width: 100%; border-radius: 13px;
+    object-fit: cover; max-height: 300px;
+    border: 1px solid var(--border);
+  }
+
+  .range-pills {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .rpill {
+    font-size: .68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .12em;
+    padding: 5px 12px; border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--txt-muted);
+    background: rgba(255,255,255,.02);
+    transition: all .15s;
+  }
+  .rpill:hover {
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-color: rgba(245,184,75,.3);
+  }
+  .rpill.active {
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-color: rgba(245,184,75,.4);
+  }
+
+  .chart-img {
+    width: 100%; border-radius: 13px;
+    border: 1px solid var(--border);
+  }
+
+  /* ══════════════ RULES ══════════════ */
+  .rules-head { margin-bottom: 18px; }
+  .rules-title {
+    font-size: 1.15rem; font-weight: 800;
+    color: #f0f6ff; letter-spacing: -.01em;
+    margin-bottom: 3px;
+  }
+  .rules-sub { font-size: .83rem; color: var(--txt-muted); }
+
+  .rule-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+  .rule-item {
+    border-radius: 15px;
+    overflow: hidden;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    transition: border-color .2s;
+  }
+  .rule-item:hover { border-color: var(--border-2); }
+
+  .rule-btn {
+    width: 100%;
+    display: flex; align-items: center; gap: 12px;
+    padding: 15px 16px;
+    background: transparent; border: none;
+    color: var(--txt); font-size: .87rem; font-weight: 600;
+    font-family: inherit; cursor: pointer; text-align: left;
+    transition: color .15s;
+  }
+  .rule-btn:hover { color: var(--gold); }
+  .rule-btn[aria-expanded="true"] { color: var(--gold); }
+
+  .rule-ico {
+    width: 31px; height: 31px;
+    border-radius: 8px;
+    background: var(--gold-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; color: var(--gold);
+    flex-shrink: 0;
+  }
+  .rule-ico img { width: 15px; height: 15px; object-fit: contain; }
+
+  .rule-chevron {
+    margin-left: auto; flex-shrink: 0;
+    color: var(--txt-muted);
+    font-size: .75rem;
+    transition: transform .25s ease, color .15s;
+  }
+  .rule-btn[aria-expanded="true"] .rule-chevron {
+    transform: rotate(180deg);
+    color: var(--gold);
+  }
+
+  .rule-body {
+    padding: 2px 16px 16px 59px;
+    font-size: .84rem;
+    color: var(--txt-soft);
+    line-height: 1.72;
+  }
+  .rule-body ol, .rule-body ul { margin: 0; padding-left: 1.3rem; }
+  .rule-body li { margin-bottom: 7px; }
+  .rule-body strong { color: var(--gold); font-weight: 700; }
+  .rule-body a { color: #7cc4ff; text-underline-offset: 3px; }
+
+  /* ══════════════ RESPONSIVE ══════════════ */
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 860px) {
+    .media-grid  { grid-template-columns: 1fr; }
+    .status-grid { grid-template-columns: 1fr; }
+    .hero { padding: 28px 22px; }
+    .hero-saldo { align-items: flex-start; margin-top: 14px; }
+  }
+  @media (max-width: 560px) {
+    .dash { padding: 14px 12px 48px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .hero-title { font-size: 1.75rem; }
+    .stat-val { font-size: 1.7rem; }
+  }
+  @media (max-width: 360px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+  /* ── Light theme overrides ── */
+  [data-theme="light"] .hero-title  { color: var(--txt); }
+  [data-theme="light"] .stat-val    { color: var(--txt); }
+  [data-theme="light"] .rules-title { color: var(--txt); }
+  [data-theme="light"] .rule-body a { color: #3d5bd0; }
+  [data-theme="light"] .stat-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,.12); }
+</style>
+
+<div class="dash">
+
+  <!-- ══════════ HERO ══════════ -->
+  <section class="dash-section fi" style="transition-delay:0ms">
+    <div class="hero">
+      <div class="hero-mesh"></div>
+      <div class="hero-blob hero-blob-1"></div>
+      <div class="hero-blob hero-blob-2"></div>
+      <div class="hero-body d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div>
+          <div class="hero-eyebrow">
+            <i class="fa-solid fa-chart-line fa-sm"></i>
+            Dashboard Reseller
+          </div>
+          <h1 class="hero-title">Ciao, {{ session.get('user') }}!</h1>
+          <p class="hero-sub">
+            Hai <b>{{ user_count }}</b> utenti attivi e <b>{{ utenti_eliminati }}</b> eliminati.
+            Gestisci <b style="color:var(--teal)">Emby</b>,
+            <b style="color:#e5a00d">Plex</b> e
+            <b style="color:#00a4dc">Jellyfin</b>.
+          </p>
+        </div>
+        <div class="hero-saldo">
+          <span class="hero-saldo-label">Saldo disponibile</span>
+          <div>
+            <span class="hero-saldo-value">{{ session.get('saldo', 0) }}</span>
+            <span class="hero-saldo-currency">€</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ STAT CARDS ══════════ -->
+  <section class="dash-section stats-grid">
+    <!-- Utenti attivi -->
+    <div class="stat-card fi" style="--c:var(--teal);--c-glow:rgba(61,213,165,.07);--ic-bg:rgba(61,213,165,.12);--badge-bg:rgba(61,213,165,.1);transition-delay:60ms">
+      <div class="stat-top">
+        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+        <span class="stat-badge">Attivi</span>
+      </div>
+      <div class="stat-val counter" data-target="{{ user_count }}">0</div>
+      <div class="stat-label">Utenti attivi</div>
+    </div>
+
+    <!-- Utenti eliminati -->
+    <div class="stat-card fi" style="--c:#ef4444;--c-glow:rgba(239,68,68,.06);--ic-bg:rgba(239,68,68,.11);--badge-bg:rgba(239,68,68,.1);transition-delay:110ms">
+      <div class="stat-top">
+        <div class="stat-icon"><i class="fa-solid fa-user-minus"></i></div>
+        <span class="stat-badge">Storico</span>
+      </div>
+      <div class="stat-val counter" data-target="{{ utenti_eliminati }}">0</div>
+      <div class="stat-label">Utenti eliminati</div>
+    </div>
+
+    <!-- Saldo -->
+    <div class="stat-card fi" style="--c:var(--gold);--c-glow:rgba(245,184,75,.07);--ic-bg:rgba(245,184,75,.12);--badge-bg:rgba(245,184,75,.1);transition-delay:160ms">
+      <div class="stat-top">
+        <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+        <span class="stat-badge">Credito</span>
+      </div>
+      <div class="stat-val">{{ session.get('saldo', 0) }}</div>
+      <div class="stat-label">Saldo disponibile</div>
+    </div>
+
+    <!-- Account -->
+    <div class="stat-card fi" style="--c:var(--blue);--c-glow:rgba(108,142,247,.06);--ic-bg:rgba(108,142,247,.12);--badge-bg:rgba(108,142,247,.1);transition-delay:210ms">
+      <div class="stat-top">
+        <div class="stat-icon"><i class="fa-solid fa-id-badge"></i></div>
+        <span class="stat-badge">Account</span>
+      </div>
+      <div class="stat-val" style="font-size:1.1rem; padding-top:6px; word-break:break-all;">{{ session.get('user') }}</div>
+      <div class="stat-label">Reseller</div>
+    </div>
+  </section>
+
+  <!-- ══════════ SERVER STATUS ══════════ -->
+  <section class="dash-section status-grid fi" style="transition-delay:260ms">
+    <!-- Plex -->
+    <div class="srv-card">
+      <div class="srv-head">
+        <div class="pulse"></div>
+        <span class="srv-title">Stato Server Plex</span>
+        <span class="srv-chip">Live</span>
+      </div>
+      <div class="srv-body">{{ statoplex }}</div>
+    </div>
+
+    <!-- Emby slots -->
+    <div class="srv-card">
+      <div class="srv-head">
+        <div class="pulse gold"></div>
+        <span class="srv-title">Posti disponibili Emby</span>
+        <span class="srv-chip gold-chip">Info</span>
+      </div>
+      <div class="srv-body">Totale server normali: {{ posti_disponibili_emby }}</div>
+    </div>
+  </section>
+
+  <!-- ══════════ MEDIA SECTION ══════════ -->
+  <section class="dash-section media-grid fi" style="transition-delay:310ms">
+    <!-- Cat of the day -->
+    <div class="media-card">
+      <div class="card-head">
+        <span class="card-head-title">🐱 Gatto del giorno</span>
+        <span class="chip">Fresh</span>
+      </div>
+      <img src="{{ gatto }}" class="cat-img" alt="Gatto del giorno" loading="lazy">
+    </div>
+
+    <!-- User growth chart -->
+    <div class="media-card">
+      <div class="card-head">
+        <span class="card-head-title">Andamento crescita utenti</span>
+        <span class="chip">Trend</span>
+      </div>
+      <div class="range-pills">
+        <a class="rpill {% if chart_range == 'all' %}active{% endif %}" href="{{ url_for('dashboard', range='all') }}">Tutto</a>
+        <a class="rpill {% if chart_range == '180' %}active{% endif %}" href="{{ url_for('dashboard', range='180') }}">180 gg</a>
+        <a class="rpill {% if chart_range == '90' %}active{% endif %}"  href="{{ url_for('dashboard', range='90') }}">90 gg</a>
+        <a class="rpill {% if chart_range == '30' %}active{% endif %}"  href="{{ url_for('dashboard', range='30') }}">30 gg</a>
+      </div>
+      <img src="data:image/png;base64,{{ chart }}" class="chart-img" alt="Grafico crescita utenti" loading="lazy">
+    </div>
+  </section>
+
+  <!-- ══════════ RULES ══════════ -->
+  <section class="dash-section fi" style="transition-delay:360ms">
+    <div class="rules-head">
+      <div class="rules-title">Regole e linee guida</div>
+      <div class="rules-sub">Resta allineato alle policy per evitare blocchi o disservizi.</div>
+    </div>
+
+    <div class="rule-wrap" id="rulesAccordion">
+
+      <!-- Regole Vendita -->
+      <div class="rule-item">
+        <button class="rule-btn" data-bs-toggle="collapse" data-bs-target="#rV" aria-expanded="true" aria-controls="rV">
+          <div class="rule-ico"><i class="fa-solid fa-tag"></i></div>
+          Regole Vendita
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rV" class="collapse show" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ul>
+              <li><strong>Vietato</strong> vendere sotto a 6 euro al mese.</li>
+              <li><strong>Vietato</strong> scrivere i prezzi del servizio in gruppi/canali pubblici.</li>
+              <li><strong>Vietato</strong> mettere foto/video del servizio in gruppi/canali pubblici.</li>
+              <li><strong>⚠️ ESTREMAMENTE VIETATO</strong> dare i contatti o metodi di pagamento del proprio master ai clienti senza permesso.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regole Utenti -->
+      <div class="rule-item">
+        <button class="rule-btn collapsed" data-bs-toggle="collapse" data-bs-target="#rU" aria-expanded="false" aria-controls="rU">
+          <div class="rule-ico"><i class="fa-solid fa-users"></i></div>
+          Regole Utenti
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rU" class="collapse" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ol>
+              <li>Gli utenti si cancellano definitivamente in automatico dopo 7 giorni dalla scadenza.</li>
+              <li>È impossibile recuperare un utente eliminato.</li>
+              <li>Gli account Emby sono personali: vietato dare 1 account a diversi clienti che non si conoscono.</li>
+              <li>Non creare account con username prova, prova1, test. Se un utente vuole rinnovare deve usare lo stesso account, scegliendo un nome significativo.</li>
+              <li>La prova gratuita minima è di 24 ore e la massima è di 3 giorni.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regole Streaming -->
+      <div class="rule-item">
+        <button class="rule-btn collapsed" data-bs-toggle="collapse" data-bs-target="#rS" aria-expanded="false" aria-controls="rS">
+          <div class="rule-ico"><i class="fa-solid fa-circle-play"></i></div>
+          Regole Streaming
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rS" class="collapse" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ol>
+              <li>Vietato convertire file 4k in risoluzioni inferiori.</li>
+              <li>Se abilitando i film 4k un utente riscontra problemi di riproduzione o buffering, questi devono essere disabilitati.</li>
+              <li>Guida problemi di rete: <a href="https://telegra.ph/Guida-problemi-di-rete-EmbyItaly-03-14" target="_blank" rel="noopener">telegra.ph/Guida-problemi-di-rete-EmbyItaly-03-14</a></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server Normale vs Premium -->
+      <div class="rule-item">
+        <button class="rule-btn collapsed" data-bs-toggle="collapse" data-bs-target="#rSrv" aria-expanded="false" aria-controls="rSrv">
+          <div class="rule-ico"><i class="fa-solid fa-server"></i></div>
+          Server Normale vs Premium Emby
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rSrv" class="collapse" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ol>
+              <li>Nessuna differenza di contenuti o prestazioni.</li>
+              <li>Server Premium: è consentito usare le app Emby ufficiali su un massimo di 2-3 dispositivi (controllo periodico).</li>
+              <li>Server Normale: l'app ufficiale funziona solo su TV Samsung e LG; su altri dispositivi si usa il browser (preferibilmente Chrome) oppure le app disponibili <a href="https://t.me/StreamingItalia_bot?start=app" target="_blank" rel="noopener">qui</a> (Android, AndroidTV, macOS, iOS con Infuse).</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plex -->
+      <div class="rule-item">
+        <button class="rule-btn collapsed" data-bs-toggle="collapse" data-bs-target="#rP" aria-expanded="false" aria-controls="rP">
+          <div class="rule-ico"><img src="{{ url_for('static', filename='plex.png') }}" alt="Plex"></div>
+          Plex
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rP" class="collapse" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ol>
+              <li>1 account, 2 streaming contemporanei. Nessun limite di dispositivi per l'utente.</li>
+              <li><strong>IMPORTANTE E OBBLIGATORIO</strong>: prima di invitare un cliente, il cliente deve essersi registrato con una sua mail su <a href="https://app.plex.tv" target="_blank" rel="noopener">app.plex.tv</a>.</li>
+              <li>Applicazioni disponibili per quasi tutti i dispositivi: <a href="https://www.plex.tv/apps-devices/#players" target="_blank" rel="noopener">plex.tv/apps</a></li>
+              <li>Errori riproduzione: impostare la qualità di riproduzione su massimo e togliere il limite dati mobili nelle impostazioni dell'app Plex.</li>
+              <li>Su Plex gli utenti vengono cancellati appena scadono (rinnovare per tempo).</li>
+              <li>Una volta ogni 6 mesi (o se vengono rilevati abusi) gli utenti dovranno riaccettare l'invito nella mail o dall'account Plex.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regole Resell -->
+      <div class="rule-item">
+        <button class="rule-btn collapsed" data-bs-toggle="collapse" data-bs-target="#rR" aria-expanded="false" aria-controls="rR">
+          <div class="rule-ico"><i class="fa-solid fa-store"></i></div>
+          Regole Resell
+          <i class="fa-solid fa-chevron-down rule-chevron"></i>
+        </button>
+        <div id="rR" class="collapse" data-bs-parent="#rulesAccordion">
+          <div class="rule-body">
+            <ol>
+              <li>Minimo 5 utenti attivi richiesti entro 2 mesi dall'attivazione.</li>
+              <li>Non abusare delle prove gratuite: 1 cliente, 1 prova.</li>
+              <li>Vietato fornire l'username o metodi di pagamento del proprio master ai clienti senza autorizzazione.</li>
+              <li>Se il credito va in negativo, ricarica al più presto; oltre un certo limite non sarà più possibile creare o rinnovare utenti e l'account verrà disabilitato.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /rule-wrap -->
+  </section>
+
+</div><!-- /dash -->
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  /* ── Animated counters ── */
+  function animateCounter(el) {
+    const target   = parseInt(el.dataset.target, 10) || 0;
+    const duration = 1100;
+    const fps      = 60;
+    const steps    = Math.round(duration / (1000 / fps));
+    let   step     = 0;
+
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+    const tick = () => {
+      step++;
+      const progress = easeOut(Math.min(step / steps, 1));
+      el.textContent = Math.round(progress * target);
+      if (step < steps) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  const counterObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        counterObserver.unobserve(e.target);
+        animateCounter(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.counter').forEach(el => counterObserver.observe(el));
+
+  /* ── Accordion aria sync for chevron CSS ── */
+  document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(btn => {
+    const panel = document.querySelector(btn.getAttribute('data-bs-target'));
+    if (!panel) return;
+    panel.addEventListener('show.bs.collapse',  () => btn.setAttribute('aria-expanded', 'true'));
+    panel.addEventListener('hide.bs.collapse',  () => btn.setAttribute('aria-expanded', 'false'));
+  });
+})();
+</script>
+{% endblock %}

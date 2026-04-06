@@ -1,0 +1,103 @@
+{% extends "basev5.html" %}
+
+{% block title %}Impostazioni di sistema{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Impostazioni di sistema
+    <span class="pg-badge" style="background:rgba(139,92,246,0.15); color:#a78bfa; border:1px solid rgba(139,92,246,0.25);">Superadmin</span>
+  </div>
+
+  <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+
+    <!-- FORM: Ricarica venditore -->
+    <div class="form-card" style="flex:1; min-width:280px; max-width:460px;">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--txt-soft); font-weight:700; margin-bottom:16px;">
+        <i class="fa-solid fa-coins me-1"></i> Ricarica Venditore
+      </div>
+      <form action="{{ url_for('ricarica_venditore') }}" method="post">
+        <div class="mb-3">
+          <label for="venditore_id" class="form-label">ID Telegram venditore</label>
+          <input type="text" class="form-control" id="venditore_id" name="venditore_id" required placeholder="Inserisci ID Telegram">
+        </div>
+        <div class="mb-4">
+          <label for="importo" class="form-label">Importo da ricaricare</label>
+          <input type="number" class="form-control" id="importo" name="importo" required placeholder="Inserisci importo">
+        </div>
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-coins me-1"></i> Ricarica
+        </button>
+      </form>
+    </div>
+
+    <!-- FORM: Crea venditore -->
+    <div class="form-card" style="flex:1; min-width:280px; max-width:460px;">
+      <div style="font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--txt-soft); font-weight:700; margin-bottom:16px;">
+        <i class="fa-solid fa-user-plus me-1"></i> Crea Nuovo Venditore
+      </div>
+      <form action="{{ url_for('crea_venditore') }}" method="post">
+        <div class="mb-3">
+          <label for="nuovo_id" class="form-label">ID Telegram venditore</label>
+          <input type="text" class="form-control" id="nuovo_id" name="venditore_id" required placeholder="Inserisci ID Telegram">
+        </div>
+        <div class="mb-4">
+          <label for="password" class="form-label">Password generata</label>
+          <input type="text" class="form-control" id="password" name="password"
+                 value="{{ password }}" readonly>
+        </div>
+        <button type="submit" class="btn-submit" style="background:var(--teal); color:#000;">
+          <i class="fa-solid fa-plus me-1"></i> Crea
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Pulsanti gestione server -->
+  <div style="margin-top:28px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('prezzi') }}" class="act-btn" style="background:rgba(61,213,165,0.12); color:var(--teal); border:1px solid rgba(61,213,165,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-euro-sign me-1"></i> Gestisci prezzi
+    </a>
+    <a href="{{ url_for('impostazioni_emby') }}" class="act-btn" style="background:var(--gold-dim); color:var(--gold); border:1px solid rgba(245,184,75,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-server me-1"></i> Gestisci server Emby
+    </a>
+    <a href="{{ url_for('impostazioni_plex') }}" class="act-btn" style="background:rgba(229,160,13,0.12); color:#e5a00d; border:1px solid rgba(229,160,13,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-server me-1"></i> Gestisci server Plex
+    </a>
+    <a href="{{ url_for('impostazioni_jelly') }}" class="act-btn" style="background:rgba(0,164,220,0.12); color:#00a4dc; border:1px solid rgba(0,164,220,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-server me-1"></i> Gestisci server Jellyfin
+    </a>
+  </div>
+
+  <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('impostazioni_utenti_emby') }}" class="act-btn" style="background:var(--gold-dim); color:var(--gold); border:1px solid rgba(245,184,75,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-users me-1"></i> Modifica utenti Emby
+    </a>
+    <a href="{{ url_for('impostazioni_utenti_plex') }}" class="act-btn" style="background:rgba(229,160,13,0.12); color:#e5a00d; border:1px solid rgba(229,160,13,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-users me-1"></i> Modifica utenti Plex
+    </a>
+    <a href="{{ url_for('impostazioni_utenti_jelly') }}" class="act-btn" style="background:rgba(0,164,220,0.12); color:#00a4dc; border:1px solid rgba(0,164,220,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-users me-1"></i> Modifica utenti Jellyfin
+    </a>
+  </div>
+
+  <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('impostazioni_reseller') }}" class="act-btn" style="background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-user-tie me-1"></i> Modifica reseller
+    </a>
+    <a href="{{ url_for('impostazioni_subseller') }}" class="act-btn" style="background:rgba(245,184,75,0.12); color:var(--gold); border:1px solid rgba(245,184,75,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-store me-1"></i> Modifica subseller
+    </a>
+  </div>
+
+  <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('verificautentiemby') }}" class="act-btn" style="background:rgba(245,184,75,0.12); color:var(--gold); border:1px solid rgba(245,184,75,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-magnifying-glass me-1"></i> Verifica utenti Emby
+    </a>
+    <a href="{{ url_for('verificautentijelly') }}" class="act-btn" style="background:rgba(0,164,220,0.12); color:#00a4dc; border:1px solid rgba(0,164,220,0.25); border-radius:var(--radius-sm); padding:10px 18px; font-size:.875rem; font-weight:600; text-decoration:none;">
+      <i class="fa-solid fa-magnifying-glass me-1"></i> Verifica utenti Jellyfin
+    </a>
+  </div>
+</div>
+{% endblock %}

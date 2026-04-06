@@ -1,0 +1,117 @@
+{% extends "basev5.html" %}
+
+{% block title %}Lista Utenti Jellyfin{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <div class="pg-title">
+    Lista Utenti
+    <span class="pg-badge platform-jelly">Jellyfin</span>
+    <span style="font-size:.95rem; font-weight:500; color:var(--txt-soft); margin-left:8px;">({{ user_count }})</span>
+  </div>
+
+  <div class="tbl-card">
+    <div class="table-responsive">
+      {{ table_html | safe }}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+<style>
+  .tbl-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  div.dataTables_wrapper { padding: 20px; color: var(--txt); font-size: .875rem; }
+  div.dataTables_wrapper div.dataTables_length,
+  div.dataTables_wrapper div.dataTables_filter { color: var(--txt-soft); }
+  div.dataTables_wrapper div.dataTables_filter input {
+    background: var(--bg-3) !important; border: 1px solid var(--border-2) !important;
+    color: var(--txt) !important; border-radius: 9px !important;
+    padding: 7px 13px !important; min-width: 220px; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  div.dataTables_wrapper div.dataTables_filter input:focus {
+    border-color: #00a4dc !important;
+    box-shadow: 0 0 0 3px rgba(0,164,220,.15) !important;
+  }
+  div.dataTables_wrapper div.dataTables_length select {
+    background: var(--bg-3) !important; border: 1px solid var(--border-2) !important;
+    color: var(--txt) !important; border-radius: 7px !important;
+    padding: 5px 10px !important; margin: 0 6px;
+  }
+  table.dataTable { border-collapse: collapse !important; margin: 0 !important; width: 100% !important; }
+  table.dataTable thead th, table.dataTable thead td {
+    background: var(--bg-3) !important; color: var(--txt-soft) !important;
+    border-bottom: 2px solid var(--border-2) !important;
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .12em;
+    font-weight: 700; padding: 13px 16px; white-space: nowrap;
+  }
+  table.dataTable tbody tr { background: transparent !important; }
+  table.dataTable tbody tr:hover td { background: rgba(255,255,255,.04) !important; }
+  table.dataTable tbody td {
+    border-top: 1px solid var(--border) !important;
+    padding: 11px 16px; color: var(--txt); vertical-align: middle;
+  }
+  table.dataTable tbody td a { color: #00a4dc; font-weight: 600; text-decoration: none; }
+  table.dataTable tbody td a:hover { text-decoration: underline; }
+  div.dataTables_wrapper div.dataTables_info { color: var(--txt-muted); font-size: .8rem; }
+  .pagination { gap: 3px; }
+  .pagination .page-link {
+    background: var(--bg-3) !important; border-color: var(--border) !important;
+    color: var(--txt-soft) !important; border-radius: 7px !important;
+    padding: 5px 11px; transition: background .15s, color .15s;
+  }
+  .pagination .page-link:hover { background: var(--bg-1) !important; color: var(--txt) !important; }
+  .pagination .page-item.active .page-link {
+    background: #00a4dc !important; border-color: #00a4dc !important;
+    color: #000 !important; font-weight: 700;
+  }
+  .pagination .page-item.disabled .page-link { opacity: .3; }
+  @media (max-width: 576px) {
+    div.dataTables_wrapper { padding: 14px; }
+    div.dataTables_wrapper div.dataTables_filter input { min-width: 140px; font-size: 16px; }
+  }
+</style>
+
+<script>
+$(function () {
+  $('#myTable')
+    .removeClass('table-striped table-bordered table-hove')
+    .addClass('table table-hover align-middle')
+    .DataTable({
+      dom:
+        '<"d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3"lf>' +
+        't' +
+        '<"d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3"ip>',
+      order: [[1, 'asc']],
+      columnDefs: [
+        { targets: 5, visible: false, searchable: false },
+        { targets: 1, orderData: [5] }
+      ],
+      pageLength: 50,
+      autoWidth: false,
+      language: {
+        search: '',
+        searchPlaceholder: 'Cerca utente Jellyfin...',
+        lengthMenu: 'Mostra _MENU_ righe',
+        info: '_START_–_END_ di _TOTAL_ utenti',
+        infoEmpty: 'Nessun utente',
+        infoFiltered: '(filtrati su _MAX_)',
+        paginate: { previous: '‹', next: '›' },
+        zeroRecords: 'Nessun risultato trovato',
+        emptyTable: 'Nessun dato disponibile'
+      }
+    });
+});
+</script>
+{% endblock %}

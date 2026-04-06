@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  embypanel:
+    build: .
+    container_name: embypanel
+    ports:
+      - "5000:5000"
+    volumes:
+      # File dati persistenti (montati dall'host)
+      - ./demo.db:/app/demo.db
+      - ./schedules.json:/app/schedules.json
+      - ./app.log:/app/app.log
+      # File .env montato come file fisico (necessario per dotenv_values)
+      - ./.env:/app/.env:ro
+    environment:
+      # PORT esposto dal Flask
+      - PORT=5000
+    restart: unless-stopped
+    # Chromium in Docker richiede /dev/shm più grande
+    shm_size: '256mb'
+    networks:
+      - embynetwork
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token eyJhIjoiYjNlZTcyZTc4NGVkY2RlNTZkYTA1YzcxMjVmZDM3NzEiLCJ0IjoiYmM5N2M1NDktMTRkNi00YWJiLTg1NTctZmJhZGExNmE2ZDdlIiwicyI6Ik9XTXhZVEl4TkdRdE1HSTFNaTAwT1RNeExUbGtabUl0WldVM09EQm1PR1UzT0dNNSJ9
+    networks:
+      - embynetwork
+
+networks:
+  embynetwork:
+    external: true

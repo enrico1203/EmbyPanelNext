@@ -1,0 +1,2 @@
+# embypanel
+pannello emby

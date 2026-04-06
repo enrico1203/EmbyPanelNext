@@ -1,0 +1,60 @@
+{% extends "basev5.html" %}
+{% block title %}Modifica nota – {{ username }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="https://res.emby.at/utente/{{ username }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna all'utente
+  </a>
+
+  <div class="pg-title">
+    Modifica nota – {{ username }}
+    <span class="pg-badge platform-emby">Emby</span>
+  </div>
+
+  <div class="form-card" style="max-width:580px;">
+    <form method="post" novalidate>
+      <div class="mb-4">
+        <label for="nota" class="form-label">
+          <i class="fa-solid fa-note-sticky me-1"></i> Nota
+        </label>
+        <textarea id="nota"
+                  name="nota"
+                  class="form-control"
+                  rows="5"
+                  required>{{ nota }}</textarea>
+        <div class="invalid-feedback">
+          La nota non può essere vuota.
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <button type="submit" class="btn-submit" style="background:var(--teal); color:#000;">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Salva
+        </button>
+        <a href="https://res.emby.at/utente/{{ username }}"
+           class="act-btn act-danger">
+          <i class="fa-solid fa-xmark me-1"></i> Annulla
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Validazione HTML5 con Bootstrap
+  (function() {
+    'use strict';
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  })();
+</script>
+{% endblock %}

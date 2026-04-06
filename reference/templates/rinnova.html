@@ -1,0 +1,147 @@
+{% extends "basev5.html" %}
+
+{% block title %}Rinnova – {{ username }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('utente', username=username) }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna all'utente
+  </a>
+
+  <div class="pg-title">
+    Rinnova – {{ username }}
+    <span class="pg-badge platform-emby">Emby</span>
+  </div>
+
+  <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+    <!-- Form Card -->
+    <div class="form-card" style="flex:1; min-width:300px; max-width:500px;">
+      <form method="post"
+            action="{{ url_for('rinnova_submit', username=username) }}"
+            id="rinnovaForm">
+        <div class="mb-3">
+          <label for="expiry" class="form-label">Scadenza attuale</label>
+          <input type="text"
+                 class="form-control"
+                 id="expiry"
+                 value="{{ expiry_val }}"
+                 readonly>
+        </div>
+        <div class="mb-3">
+          <label for="renew_days" class="form-label">Quanti giorni vuoi rinnovare?</label>
+          <input type="number"
+                 class="form-control"
+                 id="renew_days"
+                 name="renew_days"
+                 placeholder="Inserisci il numero di giorni"
+                 min="1"
+                 required>
+          <div id="daysFeedback" class="invalid-feedback">
+            Inserisci un numero maggiore di 0.
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="schermi" class="form-label">Numero di schermi</label>
+          <select class="form-select"
+                  id="schermi"
+                  name="schermi"
+                  required>
+            <option value="1" {% if schermi_val == 1 %}selected{% endif %}>1</option>
+            <option value="2" {% if schermi_val == 2 %}selected{% endif %}>2</option>
+            <option value="3" {% if schermi_val == 3 %}selected{% endif %}>3</option>
+            <option value="4" {% if schermi_val == 4 %}selected{% endif %}>4</option>
+          </select>
+        </div>
+
+        <!-- Prezzo rinnovo -->
+        <div class="mb-4" style="background:var(--bg-3); border:1px solid var(--border-2); border-radius:var(--radius-sm); padding:16px 20px;">
+          <div style="font-size:.8rem; color:var(--txt-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px;">Prezzo Rinnovo</div>
+          <div style="font-size:2rem; font-weight:700; color:var(--gold); line-height:1.1;">
+            <span id="calculatedPrice">0</span> <span style="font-size:1rem; color:var(--txt-soft);">€</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-rotate me-1"></i> Rinnova
+        </button>
+      </form>
+    </div>
+
+    <!-- Price table -->
+    <div style="flex:0 0 auto; min-width:220px;">
+      <div style="font-size:.8rem; color:var(--txt-soft); text-transform:uppercase; letter-spacing:.08em; font-weight:700; margin-bottom:12px;">Prezzario Mensile</div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="background:var(--bg-3); color:var(--txt-soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; padding:10px 14px; border-bottom:1px solid var(--border-2);">Schermi</th>
+            <th style="background:var(--bg-3); color:var(--txt-soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; padding:10px 14px; border-bottom:1px solid var(--border-2);">Prezzo/mese</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--bg-2);">
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--txt);">1</td>
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--gold); font-weight:700;">{{ prezzo1 }} €</td>
+          </tr>
+          <tr style="background:rgba(255,255,255,.022);">
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--txt);">2</td>
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--gold); font-weight:700;">{{ prezzo2 }} €</td>
+          </tr>
+          <tr style="background:var(--bg-2);">
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--txt);">3</td>
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--gold); font-weight:700;">{{ prezzo3 }} €</td>
+          </tr>
+          <tr style="background:rgba(255,255,255,.022);">
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--txt);">4</td>
+            <td style="padding:10px 14px; border-top:1px solid var(--border); color:var(--gold); font-weight:700;">{{ prezzo4 }} €</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function updatePrice() {
+    var daysInput = document.getElementById("renew_days");
+    var schermiSelect = document.getElementById("schermi");
+    var calculatedPriceElem = document.getElementById("calculatedPrice");
+    var submitBtn = document.getElementById("submitBtn") || document.querySelector('button[type="submit"]');
+
+    var days = parseInt(daysInput.value);
+    var schermi = parseInt(schermiSelect.value);
+
+    if (isNaN(days) || days <= 0) {
+      daysInput.classList.add("is-invalid");
+      submitBtn.disabled = true;
+      calculatedPriceElem.innerText = "0";
+      return;
+    } else {
+      daysInput.classList.remove("is-invalid");
+      submitBtn.disabled = false;
+    }
+
+    var prezzo1 = parseFloat("{{ prezzo1 }}");
+    var prezzo2 = parseFloat("{{ prezzo2 }}");
+    var prezzo3 = parseFloat("{{ prezzo3 }}");
+    var prezzo4 = parseFloat("{{ prezzo4 }}");
+
+    var dailyPrice = 0;
+    switch (schermi) {
+      case 1: dailyPrice = (prezzo1 * 12) / 365; break;
+      case 2: dailyPrice = (prezzo2 * 12) / 365; break;
+      case 3: dailyPrice = (prezzo3 * 12) / 365; break;
+      case 4: dailyPrice = (prezzo4 * 12) / 365; break;
+    }
+
+    var totalPrice = Math.round(dailyPrice * days * 100) / 100;
+    if (days < 4) totalPrice = 0;
+    calculatedPriceElem.innerText = totalPrice;
+  }
+
+  document.getElementById("renew_days").addEventListener("input", updatePrice);
+  document.getElementById("schermi").addEventListener("change", updatePrice);
+  updatePrice();
+</script>
+{% endblock %}

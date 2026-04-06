@@ -1,0 +1,48 @@
+{% extends "basev5.html" %}
+{% block title %}Dettagli Reseller {{ idtelegram }}{% endblock %}
+
+{% block content %}
+<div class="pg">
+  <a href="{{ url_for('reseller') }}" class="pg-back">
+    <i class="fa-solid fa-arrow-left fa-sm"></i> Torna a Reseller
+  </a>
+
+  <div class="pg-title">
+    Dettagli Reseller: {{ idtelegram }}
+  </div>
+
+  <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:18px; overflow:hidden; margin-bottom:20px;">
+    <div class="table-responsive">
+      {{ data | safe }}
+    </div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    <a href="{{ url_for('ricaricareseller', idtelegram=idtelegram) }}" class="act-btn act-success">
+      <i class="fa-solid fa-coins me-1"></i> Ricarica
+    </a>
+    <a href="{{ url_for('visualizza_utenti_reseller', idtelegram=idtelegram) }}" class="act-btn act-teal">
+      <i class="fa-solid fa-users me-1"></i> Utenti Emby
+    </a>
+    <a href="{{ url_for('visualizza_utenti_reseller_jelly', idtelegram=idtelegram) }}" class="act-btn" style="background:rgba(108,142,247,0.13); color:var(--blue); border:1px solid rgba(108,142,247,0.25); border-radius:var(--radius-sm); padding:7px 14px; font-size:.8rem; font-weight:600; text-decoration:none; transition:.15s;">
+      <i class="fa-solid fa-film me-1"></i> Utenti Jellyfin
+    </a>
+    <a href="{{ url_for('visualizza_utenti_reseller_plex', idtelegram=idtelegram) }}" class="act-btn" style="background:rgba(247,165,108,0.13); color:#f59e0b; border:1px solid rgba(247,165,108,0.25); border-radius:var(--radius-sm); padding:7px 14px; font-size:.8rem; font-weight:600; text-decoration:none; transition:.15s;">
+      <i class="fa-solid fa-tv me-1"></i> Utenti Plex
+    </a>
+    <a href="{{ url_for('modifica_password_reseller', idtelegram=idtelegram) }}" class="act-btn" style="background:rgba(16,185,129,0.14); color:#34d399; border:1px solid rgba(16,185,129,0.28); border-radius:var(--radius-sm); padding:7px 14px; font-size:.8rem; font-weight:600; text-decoration:none; transition:.15s;">
+      <i class="fa-solid fa-key me-1"></i> Modifica password
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var table = document.querySelector("table");
+    if (!table) return;
+    table.classList.add("table", "table-dark", "table-striped", "table-hover", "mb-0");
+  });
+</script>
+{% endblock %}

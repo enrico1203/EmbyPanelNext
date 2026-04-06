@@ -1,0 +1,195 @@
+{% extends "basev5.html" %}
+{% block title %}Schedulazioni{% endblock %}
+
+{% block content %}
+<div class="pg">
+
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="pg-title mb-1">Schedulazioni</h1>
+      <p class="text-muted mb-0" style="font-size:.875rem;">Gestione ed esecuzione automatica degli script di sistema</p>
+    </div>
+    <span class="pg-badge platform-emby ms-auto">SUPERADMIN</span>
+  </div>
+
+  {% if not apscheduler_ok %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span><strong>APScheduler non installato.</strong> L'esecuzione automatica è disabilitata. Installa con: <code>pip install apscheduler</code></span>
+  </div>
+  {% endif %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if scripts %}
+    {% for s in scripts %}
+    <div class="form-card mb-3">
+      <div class="row align-items-center g-3">
+
+        <!-- Info script -->
+        <div class="col-12 col-md-4">
+          <div class="d-flex align-items-start gap-3">
+            <div class="sched-icon">
+              <i class="fa-solid fa-file-code"></i>
+            </div>
+            <div>
+              <div class="fw-semibold" style="color:var(--text-1);">{{ s.name }}</div>
+              <div class="text-muted" style="font-size:.8rem;">{{ s.description }}</div>
+              <code style="font-size:.75rem;color:var(--gold);">{{ s.script }}</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ultimo run -->
+        <div class="col-6 col-md-2 text-center">
+          <div class="sched-label">Ultimo run</div>
+          <div class="sched-value">
+            {% if s.last_run %}
+              {{ s.last_run }}
+            {% else %}
+              <span class="text-muted">Mai</span>
+            {% endif %}
+          </div>
+          {% if s.last_status %}
+            {% if s.last_status == 'success' %}
+              <span class="badge bg-success mt-1"><i class="fa-solid fa-check me-1"></i>OK</span>
+            {% else %}
+              <span class="badge bg-danger mt-1"
+                    title="{{ s.last_output or '' }}"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top">
+                <i class="fa-solid fa-xmark me-1"></i>Errore
+              </span>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- Prossima esecuzione -->
+        <div class="col-6 col-md-2 text-center">
+          <div class="sched-label">Prossima esecuzione</div>
+          <div class="sched-value">
+            {% if s.next_run %}
+              {{ s.next_run }}
+            {% elif s.interval_hours and s.interval_hours > 0 %}
+              <span class="text-warning">In calcolo…</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Intervallo -->
+        <div class="col-12 col-md-2">
+          <div class="sched-label mb-1">Ogni N ore (0 = off)</div>
+          <form method="POST" action="{{ url_for('schedulazioni_intervallo', script_id=s.id) }}" class="d-flex gap-2">
+            <input type="number"
+                   name="interval_hours"
+                   class="form-control form-control-sm sched-input"
+                   value="{{ s.interval_hours }}"
+                   min="0" max="9999" step="1"
+                   placeholder="0">
+            <button type="submit" class="btn btn-sm btn-outline-secondary sched-save-btn" title="Salva intervallo">
+              <i class="fa-solid fa-floppy-disk"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Avvia ora -->
+        <div class="col-12 col-md-2 text-md-end">
+          <form method="POST" action="{{ url_for('schedulazioni_avvia', script_id=s.id) }}">
+            <button type="submit" class="act-btn act-teal w-100">
+              <i class="fa-solid fa-play me-2"></i>Avvia ora
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      {% if s.last_status == 'error' and s.last_output %}
+      <div class="sched-output mt-3">
+        <i class="fa-solid fa-terminal me-2 text-muted"></i>{{ s.last_output }}
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="form-card text-center py-5 text-muted">
+    <i class="fa-solid fa-calendar-xmark fa-2x mb-3 d-block opacity-50"></i>
+    Nessuno script configurato nel catalogo.
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+  .sched-icon {
+    width: 42px; height: 42px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(245,184,75,.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .sched-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-2, #6b7280);
+    font-weight: 600;
+  }
+  .sched-value {
+    font-size: .85rem;
+    color: var(--text-1, #e2e8f0);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .sched-input {
+    background: var(--bg-3) !important;
+    border-color: var(--border-2) !important;
+    color: var(--text-1, #e2e8f0) !important;
+    max-width: 80px;
+  }
+  .sched-input:focus {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 2px var(--gold-dim) !important;
+  }
+  .sched-save-btn {
+    border-color: var(--border-2);
+    color: var(--text-2, #9ca3af);
+  }
+  .sched-save-btn:hover {
+    background: var(--bg-3);
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+  .sched-output {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    font-family: monospace;
+    font-size: .78rem;
+    color: #f87171;
+    word-break: break-all;
+  }
+</style>
+
+<script>
+  // Attiva tooltips Bootstrap
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+      new bootstrap.Tooltip(el);
+    });
+  });
+</script>
+{% endblock %}

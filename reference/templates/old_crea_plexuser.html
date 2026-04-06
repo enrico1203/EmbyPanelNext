@@ -1,0 +1,85 @@
+{% extends "basev5.html" %}
+{% block title %}Crea Utente Plex{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Avviso importante -->
+  <div class="card bg-danger text-light mb-4">
+    <div class="card-body text-center fw-bold">
+      OBBLIGATORIO: Prima di fare l'invito ad una mail, questa
+      <span class="text-uppercase">deve</span> essere già registrata su
+      <a href="https://app.plex.tv" target="_blank"
+         class="text-white text-decoration-underline">
+        app.plex.tv
+      </a>;
+      altrimenti viene perso il credito e l'utente.
+    </div>
+  </div>
+
+  <!-- Avviso di warning -->
+  <div class="card bg-warning text-dark mb-5">
+    <div class="card-body text-center fw-bold">
+      Vietato: usare email temporanee come tempmail o simili. L'utente
+      deve avere accesso alla mail per ricevere gli inviti e gli annunci di Plex.
+    </div>
+  </div>
+
+  <h1 class="text-warning mb-4">Crea Utente Plex</h1>
+
+  <div class="card bg-dark border-secondary shadow mb-4">
+    <div class="card-body">
+      <form method="post"
+            action="{{ url_for('crea_plexuser') }}"
+            autocomplete="off"
+            id="creaPlexUserForm"
+            novalidate>
+
+        <div class="mb-3">
+          <label for="email" class="form-label text-light">
+            <i class="fas fa-envelope me-1"></i> Email
+          </label>
+          <input type="email"
+                 class="form-control bg-secondary text-light border-secondary"
+                 id="email"
+                 name="email"
+                 required
+                 placeholder="Inserisci l'email">
+          <div class="invalid-feedback bg-dark text-light border-secondary rounded px-2">
+            Il campo email è obbligatorio.
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-paper-plane me-1"></i> Invia Invito
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-start mb-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info">
+      <i class="fas fa-arrow-left me-1"></i> Torna alla Dashboard Plex
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function() {
+    'use strict';
+    const form = document.getElementById('creaPlexUserForm');
+    form.addEventListener('submit', function(e) {
+      const email = form.email;
+      if (!email.value.trim()) {
+        email.classList.add('is-invalid');
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <title>{% block title %}Dashboard{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Font Awesome per le icone -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+    /* Sidebar styles */
+    #sidebar-wrapper {
+      min-height: 100vh;
+      margin-left: -15rem;
+      transition: margin 0.25s ease-out;
+      background: #f8f9fa;
+    }
+    #sidebar-wrapper .sidebar-heading {
+      padding: 0.875rem 1.25rem;
+      font-size: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #sidebar-wrapper .list-group {
+      width: 15rem;
+    }
+    /* Page Content */
+    #page-content-wrapper {
+      width: 100%;
+    }
+    .menu-toggle {
+      cursor: pointer;
+    }
+    #sidebar-wrapper.toggled {
+      margin-left: 0;
+    }
+    @media (max-width: 768px) {
+      #sidebar-wrapper {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        height: 100%;
+      }
+      #page-content-wrapper {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-light border-right" id="sidebar-wrapper">
+    <div class="sidebar-heading">
+      Menu
+      <!-- Pulsante per chiudere il menu -->
+      <button class="btn btn-sm btn-outline-secondary" id="menu-close">&times;</button>
+    </div>
+    <div class="list-group list-group-flush">
+      <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
+      <a href="{{ url_for('lista') }}" class="list-group-item list-group-item-action bg-light">Lista</a>
+      <a href="{{ url_for('crea') }}" class="list-group-item list-group-item-action bg-light">Crea</a>
+      <a href="{{ url_for('subseller') }}" class="list-group-item list-group-item-action bg-light">Subseller</a>
+      <a href="{{ url_for('movimenti') }}" class="list-group-item list-group-item-action bg-light">Movimenti</a>
+      <a href="{{ url_for('listaPLEX') }}" class="list-group-item list-group-item-action bg-light">Lista Plex</a>
+      <a href="{{ url_for('crea_plexuser') }}" class="list-group-item list-group-item-action bg-light">Crea Utente Plex</a>
+      {% if session.get('user') == 'superadmin' %}
+      <a href="{{ url_for('prezzi') }}" class="list-group-item list-group-item-action bg-light">Prezzi</a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action bg-light">Logout</a>
+    </div>
+  </div>
+  <!-- /#sidebar-wrapper -->
+
+  <!-- Contenuto della pagina -->
+  <div id="page-content-wrapper">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+      <!-- Sezione sinistra della navbar: pulsante menu e messaggio utente -->
+      <div class="d-flex align-items-center">
+        <button class="btn btn-primary menu-toggle" id="menu-toggle">&#9776;</button>
+        {% if session.get('user') %}
+          <span class="ml-3 font-weight-bold">R: {{ session.get('user') }}</span>
+        {% endif %}
+      </div>
+      <!-- Sezione centrale/destra sempre visibile: saldo e collapse button -->
+      <div class="d-flex align-items-center ml-auto">
+        <span class="nav-link mb-0">
+          <i class="fas fa-wallet"></i> {{ session.get('saldo', 0) }}
+        </span>
+        <button class="navbar-toggler ml-2" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" 
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+      <!-- Sezione collassabile -->
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+          <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">Home</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Contenuto della pagina -->
+    <div class="container-fluid mt-4">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- Includi jQuery e Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Apertura/chiusura della sidebar
+  document.getElementById("menu-toggle").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("sidebar-wrapper").classList.toggle("toggled");
+  });
+  document.getElementById("menu-close").addEventListener("click", function(e) {
+    e.preventDefault();
+    document.getElementById("sidebar-wrapper").classList.remove("toggled");
+  });
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
