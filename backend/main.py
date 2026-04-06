@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import auth_router, admin_router, reseller_router
+from routers import auth_router, admin_router, reseller_router, prezzi_router, movimenti_router
 
 app = FastAPI(title="Streaming Panel Next API", version="1.0.0")
 
@@ -23,6 +23,8 @@ app.add_middleware(
 app.include_router(auth_router.router, prefix="/auth", tags=["Auth"])
 app.include_router(admin_router.router, prefix="/admin", tags=["Admin"])
 app.include_router(reseller_router.router, prefix="/reseller", tags=["Reseller"])
+app.include_router(prezzi_router.router, prefix="/admin", tags=["Admin"])
+app.include_router(movimenti_router.router, prefix="", tags=["Movimenti"])
 
 
 @app.get("/health")

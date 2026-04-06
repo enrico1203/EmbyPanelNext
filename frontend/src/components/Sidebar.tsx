@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -51,6 +51,16 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
           <span className="sb-label">Dashboard</span>
         </NavLink>
 
+        <NavLink
+          to="/movimenti"
+          className={linkClass("/movimenti")}
+          onClick={onCloseMobile}
+          data-tip="Movimenti"
+        >
+          <span className="sb-icon"><ReceiptText size={17} /></span>
+          <span className="sb-label">Movimenti</span>
+        </NavLink>
+
         {isMasterOrAdmin && (
           <>
             <div className="sb-section">Reseller</div>
@@ -77,6 +87,24 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><Users size={17} /></span>
               <span className="sb-label">Gestisci Reseller</span>
+            </NavLink>
+            <NavLink
+              to="/admin/prezzi"
+              className={linkClass("/admin/prezzi")}
+              onClick={onCloseMobile}
+              data-tip="Prezzi"
+            >
+              <span className="sb-icon"><CircleDollarSign size={17} /></span>
+              <span className="sb-label">Prezzi</span>
+            </NavLink>
+            <NavLink
+              to="/admin/gestione"
+              className={linkClass("/admin/gestione")}
+              onClick={onCloseMobile}
+              data-tip="Gestione"
+            >
+              <span className="sb-icon"><SlidersHorizontal size={17} /></span>
+              <span className="sb-label">Gestione</span>
             </NavLink>
           </>
         )}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
 
@@ -27,6 +27,7 @@ export default function ManageResellers() {
   const { user } = useAuth();
   const [resellers, setResellers] = useState<Reseller[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Reseller | null>(null);
   const [form, setForm] = useState<EditForm>({ username: "", master: "", credito: "", idtelegram: "", ruolo: "", password: "" });
   const [saving, setSaving] = useState(false);
@@ -43,6 +44,11 @@ export default function ManageResellers() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredResellers = resellers.filter((reseller) =>
+    reseller.username.toLowerCase().includes(normalizedSearch)
+  );
 
   const openEdit = (r: Reseller) => {
     setSelected(r);
@@ -80,8 +86,31 @@ export default function ManageResellers() {
     <div className="pg">
       <div className="pg-title">Gestisci Reseller</div>
 
+      {!loading && resellers.length > 0 && (
+        <div className="page-toolbar">
+          <label className="search-field" htmlFor="admin-resellers-search">
+            <Search size={16} />
+            <input
+              id="admin-resellers-search"
+              type="text"
+              placeholder="Cerca username"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <div className="toolbar-meta">
+            {filteredResellers.length} risultat{filteredResellers.length === 1 ? "o" : "i"}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="loading-wrap"><div className="spinner" /></div>
+      ) : filteredResellers.length === 0 ? (
+        <div className="wip-wrap">
+          <p>{resellers.length === 0 ? "Nessun reseller trovato." : `Nessun reseller trovato per "${search.trim()}".`}</p>
+        </div>
       ) : (
         <div className="table-card">
           <div className="table-wrap">
@@ -97,7 +126,7 @@ export default function ManageResellers() {
                 </tr>
               </thead>
               <tbody>
-                {resellers.map((r) => (
+                {filteredResellers.map((r) => (
                   <tr key={r.id} onClick={() => openEdit(r)}>
                     <td style={{ color: "var(--txt-muted)", fontSize: ".78rem" }}>{r.id}</td>
                     <td style={{ fontWeight: 600 }}>{r.username}</td>

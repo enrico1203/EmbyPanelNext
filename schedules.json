@@ -1,0 +1,37 @@
+{
+  "telegram_test": {
+    "interval_hours": 0,
+    "enabled": false,
+    "last_run": "01/04/2026 19:37:56",
+    "last_status": "success",
+    "last_output": "OK: Messaggio inviato a 6978931930"
+  },
+  "devices2": {
+    "interval_hours": 24,
+    "enabled": true,
+    "last_run": "05/04/2026 17:25:58",
+    "last_status": "error",
+    "last_output": "Timeout (2min)"
+  },
+  "notifichescadenza": {
+    "interval_hours": 23,
+    "enabled": true,
+    "last_run": "05/04/2026 16:24:16",
+    "last_status": "success",
+    "last_output": "Controllo scadenze — 05/04/2026 16:23:58\nSoglia notifica: entro 4 giorni\n\n  -> ERRORE Telegram [400]: Bad Request: chat not found\n  -> Notifica inviata a 7714301024\n  -> Notifica inviata a 7180972555\n  -> Notifica inviata a 7180972555\n  -> Notifica inviata a 7296566503\n  -> Notifica inviata a 2087964175\n  -> Notifica inviata a 7180972555\n[Plex] Totale: 32 | Notificati: 7 | Saltati: 0\n  -> ERRORE Telegram [400]: Bad Request: chat not found\n  -> Notifica inviata a 583086574\n  -> Notifica inviata a"
+  },
+  "bloccaemby": {
+    "interval_hours": 5,
+    "enabled": true,
+    "last_run": "05/04/2026 18:24:00",
+    "last_status": "success",
+    "last_output": "[05/04/2026 18:23:58] Avvio controllo scadenze Emby...\nUtenti scaduti trovati: 1\n-> Processo '9n87k6uy' (server: e8)\n   [OK] L'utente 9n87k6uy è stato bloccato sul server e8 in automatico\nCompletato — Bloccati: 1 | Errori: 0"
+  },
+  "verificapremiere": {
+    "interval_hours": 6,
+    "enabled": true,
+    "last_run": "05/04/2026 17:36:49",
+    "last_status": "success",
+    "last_output": "Server da verificare: 10\n\n[1/10] Server: e0 (http://78.47.86.38:8099/) [tipo: normale]\n      Testo non trovato. Estratto: '\\ue5d2\\nInizioPreferiti\\n\\ue307\\n\\ue7fd\\n\\ue88a\\nInizio\\n\\ue8b6\\nCerca\\n\\ue02c\\nFilm\\n\\ue333\\nSerie TV\\n\\ue333\\nAnime Sub ITA\\nI miei media\\nFilm\\nSerie TV\\nAnime Sub ITA\\nAudiolibri\\nCartoons\\nFilm 4k\\nFilm Anime\\nAnime ITA\\nFilm Asiatici\\nFilm HD\\nPlaylist\\nCollez'\n      Ricarico pagina premiere (tentativo 2/3)...\n   [OK] Tentativo 1: risultato = 'si'\n   -> limite = 'si' s"
+  }
+}

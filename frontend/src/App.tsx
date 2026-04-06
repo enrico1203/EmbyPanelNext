@@ -9,6 +9,9 @@ import Settings from "./pages/Settings";
 import ManageResellers from "./pages/ManageResellers";
 import MyResellers from "./pages/MyResellers";
 import ResellerDetail from "./pages/ResellerDetail";
+import Prezzi from "./pages/Prezzi";
+import Movimenti from "./pages/Movimenti";
+import Gestione from "./pages/Gestione";
 
 export default function App() {
   return (
@@ -23,8 +26,11 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/resellers" element={<ManageResellers />} />
+                <Route path="/admin/gestione" element={<Gestione />} />
                 <Route path="/resellers" element={<MyResellers />} />
                 <Route path="/resellers/:id" element={<ResellerDetail />} />
+                <Route path="/admin/prezzi" element={<Prezzi />} />
+                <Route path="/movimenti" element={<Movimenti />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

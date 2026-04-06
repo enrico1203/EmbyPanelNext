@@ -1,12 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import Reseller
-from schemas import ResellerResponse, ResellerUpdate
+from models import Reseller, PlexServer, EmbyServer, JellyServer
+from schemas import (
+    ResellerResponse,
+    ResellerUpdate,
+    PlatformManagementResponse,
+    PlatformManagementSaveRequest,
+)
 from auth import require_admin, hash_password
 
 router = APIRouter()
+
+
+def _clean_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    return cleaned or None
+
+
+def _require_text(value: str | None, field_name: str) -> str:
+    cleaned = _clean_text(value)
+    if cleaned is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Il campo '{field_name}' e obbligatorio",
+        )
+    return cleaned
 
 
 @router.get("/resellers", response_model=List[ResellerResponse])
@@ -53,3 +76,73 @@ def update_reseller(
     db.commit()
     db.refresh(reseller)
     return reseller
+
+
+@router.get("/management", response_model=PlatformManagementResponse)
+def get_platform_management(
+    current_user: Reseller = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return PlatformManagementResponse(
+        plex=db.query(PlexServer).order_by(PlexServer.nome.asc()).all(),
+        emby=db.query(EmbyServer).order_by(EmbyServer.nome.asc()).all(),
+        jelly=db.query(JellyServer).order_by(JellyServer.nome.asc()).all(),
+    )
+
+
+@router.put("/management", response_model=PlatformManagementResponse)
+def save_platform_management(
+    payload: PlatformManagementSaveRequest,
+    current_user: Reseller = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    plex_rows = [
+        PlexServer(
+            nome=_require_text(row.nome, "plex.nome"),
+            url=_require_text(row.url, "plex.url"),
+            token=_require_text(row.token, "plex.token"),
+        )
+        for row in payload.plex
+    ]
+    emby_rows = [
+        EmbyServer(
+            nome=_require_text(row.nome, "emby.nome"),
+            url=_clean_text(row.url),
+            api=_clean_text(row.api),
+            user=_clean_text(row.user),
+            password=_clean_text(row.password),
+            percorso=_clean_text(row.percorso),
+            tipo=_clean_text(row.tipo),
+            limite=_clean_text(row.limite),
+            capienza=row.capienza,
+        )
+        for row in payload.emby
+    ]
+    jelly_rows = [
+        JellyServer(
+            nome=_require_text(row.nome, "jelly.nome"),
+            url=_clean_text(row.url),
+            api=_clean_text(row.api),
+        )
+        for row in payload.jelly
+    ]
+
+    try:
+        db.query(PlexServer).delete(synchronize_session=False)
+        db.query(EmbyServer).delete(synchronize_session=False)
+        db.query(JellyServer).delete(synchronize_session=False)
+
+        db.add_all(plex_rows + emby_rows + jelly_rows)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Controlla che non ci siano nomi duplicati nelle sezioni salvate",
+        )
+
+    return PlatformManagementResponse(
+        plex=db.query(PlexServer).order_by(PlexServer.nome.asc()).all(),
+        emby=db.query(EmbyServer).order_by(EmbyServer.nome.asc()).all(),
+        jelly=db.query(JellyServer).order_by(JellyServer.nome.asc()).all(),
+    )

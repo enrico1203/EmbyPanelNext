@@ -69,7 +69,7 @@ export default function ResellerDetail() {
   return (
     <div className="pg">
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
-        <button className="btn-ghost" style={{ padding: "0.4rem 0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }} onClick={() => navigate("/resellers")}>
+        <button className="btn btn-ghost" onClick={() => navigate("/resellers")}>
           <ArrowLeft size={15} /> Indietro
         </button>
         <div className="pg-title" style={{ margin: 0 }}>Dettaglio Reseller</div>
@@ -102,7 +102,7 @@ export default function ResellerDetail() {
           <p style={{ fontSize: ".85rem", color: "var(--txt-muted)", marginBottom: "1rem" }}>
             I tuoi crediti: <strong style={{ color: "var(--txt)" }}>{user?.credito}</strong> &nbsp;|&nbsp; Min: 10 &nbsp;|&nbsp; Max: {user?.credito}
           </p>
-          <form onSubmit={handleRicarica} style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <form onSubmit={handleRicarica} style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
             <input
               type="number"
               className="login-input"
@@ -114,7 +114,7 @@ export default function ResellerDetail() {
               style={{ maxWidth: "200px", flex: "1 1 140px" }}
               disabled={sending}
             />
-            <button type="submit" className="btn-primary" disabled={sending} style={{ flex: "0 0 auto" }}>
+            <button type="submit" className="btn btn-primary" disabled={sending} style={{ flex: "0 0 auto" }}>
               {sending ? "Invio…" : "Trasferisci"}
             </button>
           </form>
