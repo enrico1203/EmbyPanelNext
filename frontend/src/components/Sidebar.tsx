@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -105,6 +105,15 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><SlidersHorizontal size={17} /></span>
               <span className="sb-label">Gestione</span>
+            </NavLink>
+            <NavLink
+              to="/admin/scheduler"
+              className={linkClass("/admin/scheduler")}
+              onClick={onCloseMobile}
+              data-tip="Scheduler"
+            >
+              <span className="sb-icon"><CalendarClock size={17} /></span>
+              <span className="sb-label">Scheduler</span>
             </NavLink>
           </>
         )}

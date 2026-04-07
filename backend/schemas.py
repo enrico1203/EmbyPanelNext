@@ -145,3 +145,30 @@ class PlatformManagementSaveRequest(BaseModel):
     plex: list[PlexConfigEntry]
     emby: list[EmbyConfigEntry]
     jelly: list[JellyConfigEntry]
+
+
+class SchedulerTaskResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    timeout: int
+    interval_hours: int
+    enabled: bool
+    running: bool = False
+    last_run: Optional[str] = None
+    last_status: Optional[str] = None
+    last_output: Optional[str] = None
+
+
+class SchedulerResponse(BaseModel):
+    tasks: list[SchedulerTaskResponse]
+
+
+class SchedulerTaskUpdate(BaseModel):
+    id: str
+    interval_hours: int
+    enabled: bool
+
+
+class SchedulerSaveRequest(BaseModel):
+    tasks: list[SchedulerTaskUpdate]

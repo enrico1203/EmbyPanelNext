@@ -1,0 +1,5 @@
+-r requirements.txt
+apscheduler==3.10.4
+paramiko==3.5.1
+requests==2.32.3
+selenium==4.28.1

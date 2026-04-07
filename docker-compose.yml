@@ -8,6 +8,28 @@ services:
       - "9091:9091"
     env_file:
       - .env
+    environment:
+      SCHEDULER_INTERNAL_URL: http://nextscheduler:9092
+      SCHEDULER_SHARED_SECRET: ${SECRET_KEY}
+    volumes:
+      - ./schedules.json:/app/schedules.json
+    networks:
+      - nextpanel
+    restart: unless-stopped
+
+  nextscheduler:
+    container_name: nextscheduler
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.scheduler
+    env_file:
+      - .env
+    environment:
+      SCHEDULER_SHARED_SECRET: ${SECRET_KEY}
+      SCHEDULES_FILE: /app/schedules.json
+    volumes:
+      - ./schedules.json:/app/schedules.json
+    shm_size: "512mb"
     networks:
       - nextpanel
     restart: unless-stopped
@@ -35,6 +57,7 @@ services:
     depends_on:
       - nextbackend
       - nextfrontend
+      - nextscheduler
 
 networks:
   nextpanel:

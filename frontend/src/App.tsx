@@ -12,6 +12,7 @@ import ResellerDetail from "./pages/ResellerDetail";
 import Prezzi from "./pages/Prezzi";
 import Movimenti from "./pages/Movimenti";
 import Gestione from "./pages/Gestione";
+import Scheduler from "./pages/Scheduler";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/resellers" element={<ManageResellers />} />
                 <Route path="/admin/gestione" element={<Gestione />} />
+                <Route path="/admin/scheduler" element={<Scheduler />} />
                 <Route path="/resellers" element={<MyResellers />} />
                 <Route path="/resellers/:id" element={<ResellerDetail />} />
                 <Route path="/admin/prezzi" element={<Prezzi />} />

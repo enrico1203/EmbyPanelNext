@@ -3,7 +3,7 @@ from database import Base
 
 
 class Reseller(Base):
-    __tablename__ = "Reseller"
+    __tablename__ = "reseller"
     __table_args__ = {"schema": "public"}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
