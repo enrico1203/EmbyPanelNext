@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -61,6 +61,35 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
           <span className="sb-label">Movimenti</span>
         </NavLink>
 
+        <div className="sb-section">Utenti</div>
+        <NavLink
+          to="/lista/emby"
+          className={linkClass("/lista/emby")}
+          onClick={onCloseMobile}
+          data-tip="Lista Emby"
+        >
+          <span className="sb-icon"><Tv2 size={17} /></span>
+          <span className="sb-label">Lista Emby</span>
+        </NavLink>
+        <NavLink
+          to="/lista/jelly"
+          className={linkClass("/lista/jelly")}
+          onClick={onCloseMobile}
+          data-tip="Lista Jellyfin"
+        >
+          <span className="sb-icon"><Tv2 size={17} /></span>
+          <span className="sb-label">Lista Jellyfin</span>
+        </NavLink>
+        <NavLink
+          to="/lista/plex"
+          className={linkClass("/lista/plex")}
+          onClick={onCloseMobile}
+          data-tip="Lista Plex"
+        >
+          <span className="sb-icon"><Tv2 size={17} /></span>
+          <span className="sb-label">Lista Plex</span>
+        </NavLink>
+
         {isMasterOrAdmin && (
           <>
             <div className="sb-section">Reseller</div>
@@ -114,6 +143,15 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><CalendarClock size={17} /></span>
               <span className="sb-label">Scheduler</span>
+            </NavLink>
+            <NavLink
+              to="/admin/testapi"
+              className={linkClass("/admin/testapi")}
+              onClick={onCloseMobile}
+              data-tip="Test API"
+            >
+              <span className="sb-icon"><FlaskConical size={17} /></span>
+              <span className="sb-label">Test API</span>
             </NavLink>
           </>
         )}

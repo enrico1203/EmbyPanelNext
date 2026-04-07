@@ -15,6 +15,7 @@ interface PlexRow {
 interface EmbyRow {
   nome: string;
   url: string;
+  https: string;
   api: string;
   user: string;
   password: string;
@@ -27,6 +28,7 @@ interface EmbyRow {
 interface JellyRow {
   nome: string;
   url: string;
+  https: string;
   api: string;
 }
 
@@ -45,7 +47,8 @@ interface FieldConfig<T> {
 
 const embyFields: FieldConfig<EmbyRow>[] = [
   { key: "nome", label: "Nome", placeholder: "es. emby-main" },
-  { key: "url", label: "URL", placeholder: "https://..." },
+  { key: "url", label: "URL HTTP", placeholder: "http://..." },
+  { key: "https", label: "URL HTTPS", placeholder: "https://..." },
   { key: "api", label: "API Key", placeholder: "Chiave API" },
   { key: "user", label: "User", placeholder: "Utente login" },
   { key: "password", label: "Password", placeholder: "Password login" },
@@ -63,13 +66,15 @@ const plexFields: FieldConfig<PlexRow>[] = [
 
 const jellyFields: FieldConfig<JellyRow>[] = [
   { key: "nome", label: "Nome", placeholder: "es. jelly-main" },
-  { key: "url", label: "URL", placeholder: "https://..." },
+  { key: "url", label: "URL HTTP", placeholder: "http://..." },
+  { key: "https", label: "URL HTTPS", placeholder: "https://..." },
   { key: "api", label: "API Key", placeholder: "Chiave API" },
 ];
 
 const emptyEmbyRow = (): EmbyRow => ({
   nome: "",
   url: "",
+  https: "",
   api: "",
   user: "",
   password: "",
@@ -88,6 +93,7 @@ const emptyPlexRow = (): PlexRow => ({
 const emptyJellyRow = (): JellyRow => ({
   nome: "",
   url: "",
+  https: "",
   api: "",
 });
 
@@ -110,6 +116,7 @@ function mapResponse(data: any): ManagementState {
       ? data.emby.map((row: any) => ({
           nome: row.nome ?? "",
           url: row.url ?? "",
+          https: row.https ?? "",
           api: row.api ?? "",
           user: row.user ?? "",
           password: row.password ?? "",
@@ -123,6 +130,7 @@ function mapResponse(data: any): ManagementState {
       ? data.jelly.map((row: any) => ({
           nome: row.nome ?? "",
           url: row.url ?? "",
+          https: row.https ?? "",
           api: row.api ?? "",
         }))
       : [],
@@ -241,6 +249,7 @@ export default function Gestione() {
         emby: form.emby.map((row) => ({
           nome: row.nome.trim(),
           url: row.url.trim() || null,
+          https: row.https.trim() || null,
           api: row.api.trim() || null,
           user: row.user.trim() || null,
           password: row.password.trim() || null,
@@ -252,6 +261,7 @@ export default function Gestione() {
         jelly: form.jelly.map((row) => ({
           nome: row.nome.trim(),
           url: row.url.trim() || null,
+          https: row.https.trim() || null,
           api: row.api.trim() || null,
         })),
       };

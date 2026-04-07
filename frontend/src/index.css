@@ -675,11 +675,25 @@ a { color: var(--red); text-decoration: none; }
   transition: border-color .15s, box-shadow .15s;
 }
 
+.config-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-3);
+  color: var(--txt);
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
 .config-field input::placeholder {
   color: var(--txt-muted);
 }
 
-.config-field input:focus {
+.config-field input:focus,
+.config-field select:focus {
   border-color: var(--red);
   box-shadow: 0 0 0 3px var(--red-dim);
 }
@@ -844,6 +858,61 @@ a { color: var(--red); text-decoration: none; }
 
 .spin-inline {
   animation: spin .8s linear infinite;
+}
+
+.testapi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.testapi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.testapi-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.testapi-card-title {
+  font-size: .96rem;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.35;
+}
+
+.testapi-card-desc {
+  font-size: .84rem;
+  color: var(--txt-soft);
+  line-height: 1.55;
+}
+
+.testapi-result {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--bg-3);
+  padding: 14px;
+}
+
+.testapi-result pre {
+  margin: 0;
+  min-height: 180px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--txt);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: .78rem;
+  line-height: 1.6;
 }
 
 @media (max-width: 1100px) {
@@ -1057,6 +1126,11 @@ tbody tr:last-child td { border-bottom: none; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .3; }
+}
+
 /* ─── Login ──────────────────────────────────────────────── */
 .login-page {
   min-height: 100vh;
@@ -1203,7 +1277,8 @@ tbody tr:last-child td { border-bottom: none; }
   }
   .scheduler-grid,
   .scheduler-meta,
-  .scheduler-controls {
+  .scheduler-controls,
+  .testapi-grid {
     grid-template-columns: 1fr;
   }
   .scheduler-card,

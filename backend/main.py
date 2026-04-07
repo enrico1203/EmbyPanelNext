@@ -6,7 +6,7 @@ load_dotenv()
 
 from database import engine, Base
 import models  # noqa: F401 — registra tutti i modelli prima del create_all
-from routers import auth_router, admin_router, reseller_router, prezzi_router, movimenti_router, scheduler_router
+from routers import auth_router, admin_router, reseller_router, prezzi_router, movimenti_router, scheduler_router, users_router, dashboard_router, testapi_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,6 +30,9 @@ app.include_router(reseller_router.router, prefix="/reseller", tags=["Reseller"]
 app.include_router(prezzi_router.router, prefix="/admin", tags=["Admin"])
 app.include_router(movimenti_router.router, prefix="", tags=["Movimenti"])
 app.include_router(scheduler_router.router, prefix="/admin", tags=["Scheduler"])
+app.include_router(users_router.router, prefix="", tags=["Users"])
+app.include_router(dashboard_router.router, prefix="", tags=["Dashboard"])
+app.include_router(testapi_router.router, prefix="/admin", tags=["TestApi"])
 
 
 @app.get("/health")

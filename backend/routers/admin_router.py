@@ -108,6 +108,7 @@ def save_platform_management(
         EmbyServer(
             nome=_require_text(row.nome, "emby.nome"),
             url=_clean_text(row.url),
+            https=_clean_text(row.https),
             api=_clean_text(row.api),
             user=_clean_text(row.user),
             password=_clean_text(row.password),
@@ -122,6 +123,7 @@ def save_platform_management(
         JellyServer(
             nome=_require_text(row.nome, "jelly.nome"),
             url=_clean_text(row.url),
+            https=_clean_text(row.https),
             api=_clean_text(row.api),
         )
         for row in payload.jelly

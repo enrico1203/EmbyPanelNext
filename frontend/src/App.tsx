@@ -13,6 +13,13 @@ import Prezzi from "./pages/Prezzi";
 import Movimenti from "./pages/Movimenti";
 import Gestione from "./pages/Gestione";
 import Scheduler from "./pages/Scheduler";
+import TestApi from "./pages/TestApi";
+import ListaEmby from "./pages/ListaEmby";
+import ListaJelly from "./pages/ListaJelly";
+import ListaPlex from "./pages/ListaPlex";
+import EmbyUserDetail from "./pages/EmbyUserDetail";
+import JellyUserDetail from "./pages/JellyUserDetail";
+import PlexUserDetail from "./pages/PlexUserDetail";
 
 export default function App() {
   return (
@@ -29,10 +36,17 @@ export default function App() {
                 <Route path="/admin/resellers" element={<ManageResellers />} />
                 <Route path="/admin/gestione" element={<Gestione />} />
                 <Route path="/admin/scheduler" element={<Scheduler />} />
+                <Route path="/admin/testapi" element={<TestApi />} />
                 <Route path="/resellers" element={<MyResellers />} />
                 <Route path="/resellers/:id" element={<ResellerDetail />} />
                 <Route path="/admin/prezzi" element={<Prezzi />} />
                 <Route path="/movimenti" element={<Movimenti />} />
+                <Route path="/lista/emby" element={<ListaEmby />} />
+                <Route path="/lista/emby/:invito" element={<EmbyUserDetail />} />
+                <Route path="/lista/jelly" element={<ListaJelly />} />
+                <Route path="/lista/jelly/:invito" element={<JellyUserDetail />} />
+                <Route path="/lista/plex" element={<ListaPlex />} />
+                <Route path="/lista/plex/:invito" element={<PlexUserDetail />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

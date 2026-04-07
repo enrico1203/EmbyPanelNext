@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Any, Optional
 from datetime import datetime
 
 
@@ -114,6 +114,7 @@ class PlexConfigEntry(BaseModel):
 class EmbyConfigEntry(BaseModel):
     nome: str
     url: Optional[str] = None
+    https: Optional[str] = None
     api: Optional[str] = None
     user: Optional[str] = None
     password: Optional[str] = None
@@ -129,6 +130,7 @@ class EmbyConfigEntry(BaseModel):
 class JellyConfigEntry(BaseModel):
     nome: str
     url: Optional[str] = None
+    https: Optional[str] = None
     api: Optional[str] = None
 
     class Config:
@@ -172,3 +174,35 @@ class SchedulerTaskUpdate(BaseModel):
 
 class SchedulerSaveRequest(BaseModel):
     tasks: list[SchedulerTaskUpdate]
+
+
+class TestApiActionOption(BaseModel):
+    id: str
+    label: str
+
+
+class TestApiOptionsResponse(BaseModel):
+    emby_servers: list[str]
+    jelly_servers: list[str]
+    plex_servers: list[str]
+    emby_actions: list[TestApiActionOption]
+    jelly_actions: list[TestApiActionOption]
+    plex_actions: list[TestApiActionOption]
+
+
+class TestApiRunRequest(BaseModel):
+    service: str
+    action: str
+    server_name: Optional[str] = None
+    server_type: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    email: Optional[str] = None
+    default_max: Optional[int] = None
+
+
+class TestApiRunResponse(BaseModel):
+    ok: bool
+    service: str
+    action: str
+    result: Any

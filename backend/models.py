@@ -52,6 +52,7 @@ class EmbyServer(Base):
 
     nome = Column(Text, primary_key=True)
     url = Column(Text, nullable=True)
+    https = Column(Text, nullable=True)
     api = Column(Text, nullable=True)
     user = Column(Text, nullable=True)
     password = Column(Text, nullable=True)
@@ -67,4 +68,54 @@ class JellyServer(Base):
 
     nome = Column(Text, primary_key=True)
     url = Column(Text, nullable=True)
+    https = Column(Text, nullable=True)
     api = Column(Text, nullable=True)
+
+
+class EmbyUser(Base):
+    __tablename__ = "euser"
+    __table_args__ = {"schema": "public"}
+
+    invito = Column(Integer, primary_key=True)
+    reseller = Column("id", Text, nullable=True)
+    user = Column(Text, nullable=True)
+    date = Column(TIMESTAMP, nullable=True)
+    expiry = Column(Integer, nullable=True)
+    server = Column(Text, nullable=True)
+    schermi = Column(Integer, nullable=True)
+    k4 = Column("4k", Text, nullable=True)
+    download = Column(Text, nullable=True)
+    password = Column(Text, nullable=True)
+    nota = Column(Text, nullable=True)
+
+
+class JellyUser(Base):
+    __tablename__ = "juser"
+    __table_args__ = {"schema": "public"}
+
+    invito = Column(Integer, primary_key=True)
+    reseller = Column("id", Text, nullable=True)
+    user = Column(Text, nullable=True)
+    date = Column(TIMESTAMP, nullable=True)
+    expiry = Column(Integer, nullable=True)
+    server = Column(Text, nullable=True)
+    schermi = Column(Integer, nullable=True)
+    k4 = Column("4k", Text, nullable=True)
+    download = Column(Text, nullable=True)
+    password = Column(Text, nullable=True)
+    nota = Column(Text, nullable=True)
+
+
+class PlexUser(Base):
+    __tablename__ = "puser"
+    __table_args__ = {"schema": "public"}
+
+    invito = Column(Integer, primary_key=True)
+    reseller = Column("id", Text, nullable=True)
+    pmail = Column(Text, nullable=True)
+    date = Column(TIMESTAMP, nullable=True)
+    expiry = Column(Integer, nullable=True)
+    nschermi = Column(Integer, nullable=True)
+    server = Column(Text, nullable=True)
+    fromuser = Column(Text, nullable=True)
+    nota = Column(Text, nullable=True)
