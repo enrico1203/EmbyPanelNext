@@ -12,6 +12,7 @@ import ResellerDetail from "./pages/ResellerDetail";
 import Prezzi from "./pages/Prezzi";
 import Movimenti from "./pages/Movimenti";
 import Gestione from "./pages/Gestione";
+import GestioneUtenti from "./pages/GestioneUtenti";
 import Scheduler from "./pages/Scheduler";
 import TestApi from "./pages/TestApi";
 import ListaEmby from "./pages/ListaEmby";
@@ -20,6 +21,9 @@ import ListaPlex from "./pages/ListaPlex";
 import EmbyUserDetail from "./pages/EmbyUserDetail";
 import JellyUserDetail from "./pages/JellyUserDetail";
 import PlexUserDetail from "./pages/PlexUserDetail";
+import CreateEmbyUser from "./pages/CreateEmbyUser";
+import CreateJellyUser from "./pages/CreateJellyUser";
+import CreatePlexUser from "./pages/CreatePlexUser";
 
 export default function App() {
   return (
@@ -35,8 +39,12 @@ export default function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/resellers" element={<ManageResellers />} />
                 <Route path="/admin/gestione" element={<Gestione />} />
+                <Route path="/admin/gestione-utenti" element={<GestioneUtenti />} />
                 <Route path="/admin/scheduler" element={<Scheduler />} />
                 <Route path="/admin/testapi" element={<TestApi />} />
+                <Route path="/crea/emby" element={<CreateEmbyUser />} />
+                <Route path="/crea/jellyfin" element={<CreateJellyUser />} />
+                <Route path="/crea/plex" element={<CreatePlexUser />} />
                 <Route path="/resellers" element={<MyResellers />} />
                 <Route path="/resellers/:id" element={<ResellerDetail />} />
                 <Route path="/admin/prezzi" element={<Prezzi />} />

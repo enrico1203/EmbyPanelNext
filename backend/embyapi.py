@@ -286,7 +286,10 @@ def set_user_policy(
     db: Session | None = None,
 ) -> dict[str, Any]:
     server = get_server_config(server_name, db)
-    current_policy = get_user_policy(server_name, user_id, db) or {}
+    try:
+        current_policy = get_user_policy(server_name, user_id, db) or {}
+    except RuntimeError:
+        current_policy = {}
     current_policy.update(updates)
     _request(
         "POST",
@@ -373,7 +376,10 @@ def disable_4k(server_name: str, username: str, db: Session | None = None) -> bo
 
     library_ids = get_library_ids(server_name, db)
     user_info = get_user_info(server_name, user_id, db) or {}
-    policy = user_info.get("Policy") or get_user_policy(server_name, user_id, db) or {}
+    try:
+        policy = user_info.get("Policy") or get_user_policy(server_name, user_id, db) or {}
+    except RuntimeError:
+        policy = user_info.get("Policy") or {}
     policy.update(
         {
             "EnableAllFolders": False,
@@ -398,7 +404,10 @@ def enable_4k(server_name: str, username: str, db: Session | None = None) -> boo
     all_folders = ",".join(library_ids["enabled_folders"] + processed_excluded)
 
     user_info = get_user_info(server_name, user_id, db) or {}
-    policy = user_info.get("Policy") or get_user_policy(server_name, user_id, db) or {}
+    try:
+        policy = user_info.get("Policy") or get_user_policy(server_name, user_id, db) or {}
+    except RuntimeError:
+        policy = user_info.get("Policy") or {}
     policy.update(
         {
             "EnableAllFolders": False,

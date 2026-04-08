@@ -10,7 +10,7 @@ class Reseller(Base):
     username = Column(String(50), unique=True, nullable=False)
     master = Column(Integer, nullable=True)
     password = Column(Text, nullable=False)
-    credito = Column(Integer, default=0)
+    credito = Column(Float, default=0)
     idtelegram = Column(BigInteger, nullable=True)
     ruolo = Column(String(20), nullable=False, default="reseller")
 

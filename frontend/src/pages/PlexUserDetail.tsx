@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, Trash2, StickyNote, Copy, Check } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trash2, StickyNote, Copy, Check, LoaderCircle, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
 
@@ -20,6 +20,13 @@ interface PlexUserDetail {
   nota: string | null;
 }
 
+interface ProvisioningOptions {
+  credito: number;
+  prices: Record<string, Record<string, number>>;
+}
+
+type Notice = { type: "success" | "error"; text: string } | null;
+
 function ExpiryBadge({ days }: { days: number | null }) {
   if (days === null) return <span style={{ color: "var(--txt-muted)" }}>—</span>;
   const cls = days <= 0 ? { bg: "rgba(239,68,68,.12)", color: "#f87171", border: "rgba(239,68,68,.28)" }
@@ -34,18 +41,9 @@ function ExpiryBadge({ days }: { days: number | null }) {
 
 function Row({ label, value, accent }: { label: string; value: React.ReactNode; accent?: boolean }) {
   return (
-    <div style={{
-      display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center",
-      padding: "11px 18px", borderBottom: "1px solid var(--border)",
-      fontSize: ".875rem", transition: "background .12s",
-    }}
-      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.025)")}
-      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-    >
-      <span style={{ color: "var(--txt-muted)", fontWeight: 600, fontSize: ".75rem", textTransform: "uppercase", letterSpacing: ".09em" }}>
-        {label}
-      </span>
-      <span style={{ color: accent ? "#e5a00d" : "var(--txt)", fontWeight: accent ? 700 : 500, wordBreak: "break-all" }}>
+    <div className="detail-row">
+      <span className="detail-row-label">{label}</span>
+      <span className="detail-row-value" style={{ color: accent ? "#e5a00d" : "var(--txt)", fontWeight: accent ? 700 : 500 }}>
         {value ?? "—"}
       </span>
     </div>
@@ -62,17 +60,29 @@ const actionBtn = (color: string, bg: string, border: string) => ({
 export default function PlexUserDetail() {
   const { invito } = useParams<{ invito: string }>();
   const navigate = useNavigate();
-  const { user: me } = useAuth();
+  const { user: me, refreshUser } = useAuth();
   const isAdmin = me?.ruolo === "admin";
 
   const [u, setU] = useState<PlexUserDetail | null>(null);
+  const [options, setOptions] = useState<ProvisioningOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showRenew, setShowRenew] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [renewDays, setRenewDays] = useState("30");
 
   useEffect(() => {
-    api.get(`/users/plex/${invito}`)
-      .then(r => setU(r.data))
+    Promise.all([
+      api.get(`/users/plex/${invito}`),
+      api.get("/provisioning/options"),
+    ])
+      .then(([userResponse, optionsResponse]) => {
+        setU(userResponse.data);
+        setOptions(optionsResponse.data);
+      })
       .catch(e => setError(e?.response?.data?.detail ?? e.message))
       .finally(() => setLoading(false));
   }, [invito]);
@@ -80,21 +90,68 @@ export default function PlexUserDetail() {
   const handleCopy = () => {
     if (!u) return;
     const lines = [
-      "📊 Dettagli account Plex:",
+      "Dettagli account Plex:",
       "",
-      `📧 Email: ${u.pmail ?? "—"}`,
-      `📅 Attivazione: ${u.date_fmt ?? "—"}`,
-      `⏰ Scadenza: ${u.expiry_date ?? "—"}`,
-      `⏳ Giorni rimanenti: ${u.days_left ?? "—"}`,
-      `💻 Server: ${u.server ?? "—"}`,
-      `🌐 URL: https://app.plex.tv`,
-      `🖥️ Schermi: ${u.nschermi ?? "—"}`,
-      `📝 Note: ${u.nota ?? "—"}`,
+      `Email: ${u.pmail ?? "—"}`,
+      `Attivazione: ${u.date_fmt ?? "—"}`,
+      `Scadenza: ${u.expiry_date ?? "—"}`,
+      `Giorni rimanenti: ${u.days_left ?? "—"}`,
+      `Server: ${u.server ?? "—"}`,
+      `URL: https://app.plex.tv`,
+      `Schermi: ${u.nschermi ?? "—"}`,
+      `Note: ${u.nota ?? "—"}`,
     ];
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleDelete = async () => {
+    setSubmitting(true);
+    setNotice(null);
+    try {
+      const response = await api.delete(`/users/plex/${invito}`);
+      setConfirmDelete(false);
+      setNotice({ type: "success", text: response.data.message });
+      navigate("/lista/plex");
+    } catch (err: any) {
+      setNotice({
+        type: "error",
+        text: err?.response?.data?.detail ?? "Errore durante la cancellazione dell'utente Plex.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const monthlyPrice = Number(options?.prices?.plex?.[String(u?.nschermi ?? 1)] ?? 0);
+  const renewCost = Math.round((monthlyPrice * ((Number(renewDays) || 0) / 30.416)) * 100) / 100;
+  const remainingEstimate = Math.round(((Number(me?.credito ?? 0) - renewCost) * 100)) / 100;
+
+  const handleRenew = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setNotice(null);
+    try {
+      const response = await api.post(`/users/plex/${invito}/renew`, {
+        days: Number(renewDays),
+      });
+      setU(response.data.user);
+      setShowRenew(false);
+      await refreshUser();
+      setNotice({
+        type: "success",
+        text: `${response.data.message}. Costo: ${Number(response.data.cost ?? 0).toFixed(2)}€. Credito residuo: ${Number(response.data.remaining_credit ?? 0).toFixed(2)}€.`,
+      });
+    } catch (err: any) {
+      setNotice({
+        type: "error",
+        text: err?.response?.data?.detail ?? "Errore durante il rinnovo dell'utente Plex.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <div className="pg"><div className="loading-wrap"><div className="spinner" /></div></div>;
@@ -115,11 +172,22 @@ export default function PlexUserDetail() {
         <p style={{ fontSize: ".83rem", color: "var(--txt-muted)", margin: "4px 0 0" }}>Dettagli e gestione account</p>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
-        <button style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")} title="Funzionalità in arrivo">
+      {notice?.type === "success" && <div className="save-success">{notice.text}</div>}
+      {notice?.type === "error" && <div className="login-error">{notice.text}</div>}
+
+      <div className="detail-actions" style={{ marginBottom: 22 }}>
+        <button
+          style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")}
+          onClick={() => {
+            setNotice(null);
+            setRenewDays("30");
+            setShowRenew(true);
+          }}
+          disabled={submitting}
+        >
           <RotateCcw size={14} /> Rinnova
         </button>
-        <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} title="Funzionalità in arrivo">
+        <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => setConfirmDelete(true)} disabled={submitting}>
           <Trash2 size={14} /> Cancella
         </button>
         <button style={actionBtn("var(--txt-soft)", "var(--bg-3)", "var(--border-2)")} title="Funzionalità in arrivo">
@@ -142,11 +210,73 @@ export default function PlexUserDetail() {
         <Row label="URL" value="https://app.plex.tv" />
         <Row label="Schermi" value={u.nschermi} />
         <Row label="Invitato da" value={u.fromuser} />
-        <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", alignItems: "center", padding: "11px 18px", fontSize: ".875rem" }}>
-          <span style={{ color: "var(--txt-muted)", fontWeight: 600, fontSize: ".75rem", textTransform: "uppercase", letterSpacing: ".09em" }}>Note</span>
-          <span style={{ color: "var(--txt)", fontWeight: 500 }}>{u.nota || "—"}</span>
+        <div className="detail-row">
+          <span className="detail-row-label">Note</span>
+          <span className="detail-row-value">{u.nota || "—"}</span>
         </div>
       </div>
+
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={(event) => event.target === event.currentTarget && !submitting && setConfirmDelete(false)}>
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">Cancella utente Plex</span>
+              <button className="btn-ic" onClick={() => setConfirmDelete(false)} disabled={submitting}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ margin: 0, color: "var(--txt)" }}>
+                Vuoi cancellare definitivamente l'utente <strong>{u.pmail}</strong> da Plex e dal database locale?
+              </p>
+              <div className="create-note">La cancellazione viene anche registrata nei movimenti e non modifica il credito.</div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setConfirmDelete(false)} disabled={submitting}>Annulla</button>
+              <button type="button" className="btn btn-primary" onClick={handleDelete} disabled={submitting} style={{ background: "#dc2626", borderColor: "#dc2626" }}>
+                {submitting ? <LoaderCircle size={15} className="spin-inline" /> : <Trash2 size={15} />}
+                Cancella utente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRenew && (
+        <div className="modal-overlay" onClick={(event) => event.target === event.currentTarget && !submitting && setShowRenew(false)}>
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">Rinnova utente Plex</span>
+              <button className="btn-ic" onClick={() => setShowRenew(false)} disabled={submitting}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleRenew}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Giorni da aggiungere</label>
+                  <input type="number" min="1" value={renewDays} onChange={(event) => setRenewDays(event.target.value)} />
+                </div>
+                <div className="detail-summary-card">
+                  <div className="create-summary-label">Costo stimato</div>
+                  <div className="create-summary-value">{renewCost.toFixed(2)}€</div>
+                  <div className="create-summary-meta">Schermi Plex: {u.nschermi ?? 1}</div>
+                  <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)}€</div>
+                  <div className="create-summary-meta">Credito attuale: {Number(me?.credito ?? 0).toFixed(2)}€</div>
+                  <div className="create-summary-meta">Credito residuo stimato: {remainingEstimate.toFixed(2)}€</div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowRenew(false)} disabled={submitting}>Annulla</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? <LoaderCircle size={15} className="spin-inline" /> : <RotateCcw size={15} />}
+                  Conferma rinnovo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

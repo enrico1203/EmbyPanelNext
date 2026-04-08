@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2 } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2, Tv, MailPlus } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -59,6 +59,35 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
         >
           <span className="sb-icon"><ReceiptText size={17} /></span>
           <span className="sb-label">Movimenti</span>
+        </NavLink>
+
+        <div className="sb-section">Crea</div>
+        <NavLink
+          to="/crea/emby"
+          className={linkClass("/crea/emby")}
+          onClick={onCloseMobile}
+          data-tip="Crea Emby"
+        >
+          <span className="sb-icon"><Tv size={17} /></span>
+          <span className="sb-label">Crea Emby</span>
+        </NavLink>
+        <NavLink
+          to="/crea/jellyfin"
+          className={linkClass("/crea/jellyfin")}
+          onClick={onCloseMobile}
+          data-tip="Crea Jellyfin"
+        >
+          <span className="sb-icon"><Tv2 size={17} /></span>
+          <span className="sb-label">Crea Jellyfin</span>
+        </NavLink>
+        <NavLink
+          to="/crea/plex"
+          className={linkClass("/crea/plex")}
+          onClick={onCloseMobile}
+          data-tip="Crea Plex"
+        >
+          <span className="sb-icon"><MailPlus size={17} /></span>
+          <span className="sb-label">Crea Plex</span>
         </NavLink>
 
         <div className="sb-section">Utenti</div>
@@ -134,6 +163,15 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><SlidersHorizontal size={17} /></span>
               <span className="sb-label">Gestione</span>
+            </NavLink>
+            <NavLink
+              to="/admin/gestione-utenti"
+              className={linkClass("/admin/gestione-utenti")}
+              onClick={onCloseMobile}
+              data-tip="Gestione Utenti"
+            >
+              <span className="sb-icon"><Users size={17} /></span>
+              <span className="sb-label">Gestione Utenti</span>
             </NavLink>
             <NavLink
               to="/admin/scheduler"

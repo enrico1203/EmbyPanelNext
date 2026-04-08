@@ -220,7 +220,10 @@ def set_user_policy(
     db: Session | None = None,
 ) -> dict[str, Any]:
     server = get_server_config(server_name, db)
-    current_policy = get_user_policy(server_name, user_id, db) or {}
+    try:
+        current_policy = get_user_policy(server_name, user_id, db) or {}
+    except RuntimeError:
+        current_policy = {}
     current_policy.update(updates)
     current_policy.setdefault("AuthenticationProviderId", AUTH_PROVIDER)
     current_policy.setdefault("PasswordResetProviderId", PASSWORD_RESET_PROVIDER)

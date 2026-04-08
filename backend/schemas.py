@@ -16,7 +16,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     id: int
     username: str
-    credito: int
+    credito: float
     ruolo: str
     idtelegram: Optional[int] = None
 
@@ -28,7 +28,7 @@ class ResellerResponse(BaseModel):
     id: int
     username: str
     master: Optional[int] = None
-    credito: int
+    credito: float
     idtelegram: Optional[int] = None
     ruolo: str
 
@@ -37,25 +37,25 @@ class ResellerResponse(BaseModel):
 
 
 class RicaricaRequest(BaseModel):
-    amount: int
+    amount: float
 
 
 class RicaricaResponse(BaseModel):
-    my_new_balance: int
-    reseller_new_balance: int
+    my_new_balance: float
+    reseller_new_balance: float
     reseller_ruolo: str
 
 
 class CreateResellerRequest(BaseModel):
     username: str
-    credito: int
+    credito: float
     idtelegram: Optional[int] = None
 
 
 class CreateResellerResponse(BaseModel):
     id: int
     username: str
-    credito: int
+    credito: float
     ruolo: str
     password_generata: str
 
@@ -147,6 +147,73 @@ class PlatformManagementSaveRequest(BaseModel):
     plex: list[PlexConfigEntry]
     emby: list[EmbyConfigEntry]
     jelly: list[JellyConfigEntry]
+
+
+class PlexUserManagementEntry(BaseModel):
+    invito: Optional[int] = None
+    id: Optional[str] = None
+    pmail: Optional[str] = None
+    date: Optional[datetime] = None
+    expiry: Optional[int] = None
+    nschermi: Optional[int] = None
+    server: Optional[str] = None
+    fromuser: Optional[str] = None
+    nota: Optional[str] = None
+
+
+class JellyUserManagementEntry(BaseModel):
+    invito: Optional[int] = None
+    id: Optional[str] = None
+    user: Optional[str] = None
+    date: Optional[datetime] = None
+    expiry: Optional[int] = None
+    server: Optional[str] = None
+    schermi: Optional[int] = None
+    k4: Optional[str] = None
+    download: Optional[str] = None
+    password: Optional[str] = None
+    nota: Optional[str] = None
+
+
+class EmbyUserManagementEntry(BaseModel):
+    invito: Optional[int] = None
+    id: Optional[str] = None
+    user: Optional[str] = None
+    date: Optional[datetime] = None
+    expiry: Optional[int] = None
+    server: Optional[str] = None
+    schermi: Optional[int] = None
+    k4: Optional[str] = None
+    download: Optional[str] = None
+    password: Optional[str] = None
+    nota: Optional[str] = None
+
+
+class UserManagementResponse(BaseModel):
+    plex: list[PlexUserManagementEntry]
+    jelly: list[JellyUserManagementEntry]
+    emby: list[EmbyUserManagementEntry]
+
+
+class UserManagementSaveRequest(BaseModel):
+    plex: list[PlexUserManagementEntry]
+    jelly: list[JellyUserManagementEntry]
+    emby: list[EmbyUserManagementEntry]
+
+
+class PlexUserRowSaveRequest(BaseModel):
+    original_invito: Optional[int] = None
+    row: PlexUserManagementEntry
+
+
+class JellyUserRowSaveRequest(BaseModel):
+    original_invito: Optional[int] = None
+    row: JellyUserManagementEntry
+
+
+class EmbyUserRowSaveRequest(BaseModel):
+    original_invito: Optional[int] = None
+    row: EmbyUserManagementEntry
 
 
 class SchedulerTaskResponse(BaseModel):
