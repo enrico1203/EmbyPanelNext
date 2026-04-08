@@ -9,6 +9,8 @@ from models import Reseller, PlexServer, EmbyServer, JellyServer, PlexUser, Jell
 from schemas import (
     ResellerResponse,
     ResellerUpdate,
+    RenameResellerUsernameRequest,
+    RenameResellerUsernameResponse,
     PlatformManagementResponse,
     PlatformManagementSaveRequest,
     UserManagementResponse,
@@ -20,7 +22,7 @@ from schemas import (
     JellyUserRowSaveRequest,
     EmbyUserRowSaveRequest,
 )
-from auth import require_admin, hash_password
+from auth import require_admin
 
 router = APIRouter()
 
@@ -325,9 +327,7 @@ def update_reseller(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    if "password" in update_data and update_data["password"]:
-        update_data["password"] = hash_password(update_data["password"])
-    elif "password" in update_data:
+    if "password" in update_data and not update_data["password"]:
         del update_data["password"]
 
     for key, value in update_data.items():
@@ -336,6 +336,74 @@ def update_reseller(
     db.commit()
     db.refresh(reseller)
     return reseller
+
+
+@router.post("/functions/rename-reseller-username", response_model=RenameResellerUsernameResponse)
+def rename_reseller_username(
+    payload: RenameResellerUsernameRequest,
+    current_user: Reseller = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    old_username = _require_text(payload.old_username, "old_username")
+    new_username = _require_text(payload.new_username, "new_username")
+
+    if old_username == new_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Il nuovo username deve essere diverso da quello attuale",
+        )
+
+    reseller = db.query(Reseller).filter(Reseller.username == old_username).first()
+    if not reseller:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reseller non trovato")
+
+    existing = db.query(Reseller).filter(Reseller.username == new_username).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Il nuovo username e gia in uso")
+
+    updated_emby = (
+        db.query(EmbyUser)
+        .filter(EmbyUser.reseller == old_username)
+        .update({EmbyUser.reseller: new_username}, synchronize_session=False)
+    )
+    updated_jelly = (
+        db.query(JellyUser)
+        .filter(JellyUser.reseller == old_username)
+        .update({JellyUser.reseller: new_username}, synchronize_session=False)
+    )
+    updated_plex = (
+        db.query(PlexUser)
+        .filter(PlexUser.reseller == old_username)
+        .update({PlexUser.reseller: new_username}, synchronize_session=False)
+    )
+
+    reseller.username = new_username
+    db.flush()
+
+    movement_result = db.execute(
+        text(
+            """
+            UPDATE public.movimenti
+            SET "user" = :new_username
+            WHERE "user" = :old_username
+            """
+        ),
+        {"old_username": old_username, "new_username": new_username},
+    )
+
+    db.commit()
+    db.refresh(reseller)
+
+    return RenameResellerUsernameResponse(
+        message=f"Username reseller aggiornato da {old_username} a {new_username}",
+        old_username=old_username,
+        new_username=new_username,
+        updated_reseller=1,
+        updated_emby_users=int(updated_emby or 0),
+        updated_jelly_users=int(updated_jelly or 0),
+        updated_plex_users=int(updated_plex or 0),
+        updated_movements=int(movement_result.rowcount or 0),
+    )
 
 
 @router.get("/management", response_model=PlatformManagementResponse)

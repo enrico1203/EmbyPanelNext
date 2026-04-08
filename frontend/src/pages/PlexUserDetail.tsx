@@ -27,6 +27,11 @@ interface ProvisioningOptions {
 
 type Notice = { type: "success" | "error"; text: string } | null;
 
+function formatDaysStatus(days: number | null) {
+  if (days === null) return "—";
+  return days <= 0 ? `Scaduto (${days})` : `${days} giorni`;
+}
+
 function ExpiryBadge({ days }: { days: number | null }) {
   if (days === null) return <span style={{ color: "var(--txt-muted)" }}>—</span>;
   const cls = days <= 0 ? { bg: "rgba(239,68,68,.12)", color: "#f87171", border: "rgba(239,68,68,.28)" }
@@ -34,7 +39,7 @@ function ExpiryBadge({ days }: { days: number | null }) {
     : { bg: "rgba(61,213,165,.12)", color: "var(--teal)", border: "rgba(61,213,165,.28)" };
   return (
     <span style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.border}`, borderRadius: 999, padding: "3px 12px", fontSize: ".78rem", fontWeight: 700 }}>
-      {days <= 0 ? "Scaduto" : `${days} giorni`}
+      {formatDaysStatus(days)}
     </span>
   );
 }
@@ -95,7 +100,7 @@ export default function PlexUserDetail() {
       `Email: ${u.pmail ?? "—"}`,
       `Attivazione: ${u.date_fmt ?? "—"}`,
       `Scadenza: ${u.expiry_date ?? "—"}`,
-      `Giorni rimanenti: ${u.days_left ?? "—"}`,
+      `Giorni rimanenti: ${formatDaysStatus(u.days_left)}`,
       `Server: ${u.server ?? "—"}`,
       `URL: https://app.plex.tv`,
       `Schermi: ${u.nschermi ?? "—"}`,
@@ -142,7 +147,7 @@ export default function PlexUserDetail() {
       await refreshUser();
       setNotice({
         type: "success",
-        text: `${response.data.message}. Costo: ${Number(response.data.cost ?? 0).toFixed(2)}€. Credito residuo: ${Number(response.data.remaining_credit ?? 0).toFixed(2)}€.`,
+        text: `${response.data.message}. Costo: ${Number(response.data.cost ?? 0).toFixed(2)} crediti. Credito residuo: ${Number(response.data.remaining_credit ?? 0).toFixed(2)} crediti.`,
       });
     } catch (err: any) {
       setNotice({
@@ -259,11 +264,11 @@ export default function PlexUserDetail() {
                 </div>
                 <div className="detail-summary-card">
                   <div className="create-summary-label">Costo stimato</div>
-                  <div className="create-summary-value">{renewCost.toFixed(2)}€</div>
+                  <div className="create-summary-value">{renewCost.toFixed(2)} crediti</div>
                   <div className="create-summary-meta">Schermi Plex: {u.nschermi ?? 1}</div>
-                  <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)}€</div>
-                  <div className="create-summary-meta">Credito attuale: {Number(me?.credito ?? 0).toFixed(2)}€</div>
-                  <div className="create-summary-meta">Credito residuo stimato: {remainingEstimate.toFixed(2)}€</div>
+                  <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)} crediti</div>
+                  <div className="create-summary-meta">Credito attuale: {Number(me?.credito ?? 0).toFixed(2)} crediti</div>
+                  <div className="create-summary-meta">Credito residuo stimato: {remainingEstimate.toFixed(2)} crediti</div>
                 </div>
               </div>
               <div className="modal-footer">

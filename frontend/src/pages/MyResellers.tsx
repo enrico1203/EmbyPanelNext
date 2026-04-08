@@ -68,9 +68,9 @@ export default function MyResellers() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
-    const credito = parseInt(form.credito, 10);
+    const credito = Number.parseFloat(form.credito);
     if (!form.username.trim()) { setFormError("Username obbligatorio."); return; }
-    if (isNaN(credito) || credito < 10) { setFormError("Il credito minimo è 10."); return; }
+    if (Number.isNaN(credito) || credito < 0.1) { setFormError("Il credito minimo è 0.1."); return; }
     if (credito > (user?.credito ?? 0)) { setFormError("Crediti insufficienti."); return; }
 
     setCreating(true);
@@ -202,17 +202,18 @@ export default function MyResellers() {
                   </div>
                   <div>
                     <label className="modal-label">
-                      Crediti iniziali
-                      <span style={{ color: "var(--txt-muted)", fontWeight: 400, marginLeft: "0.5rem" }}>
-                        (min 10, disponibili: {user?.credito})
+                        Crediti iniziali
+                        <span style={{ color: "var(--txt-muted)", fontWeight: 400, marginLeft: "0.5rem" }}>
+                        (min 0.1, disponibili: {user?.credito})
                       </span>
                     </label>
                     <input
                       type="number"
                       className="login-input"
                       style={{ width: "100%" }}
-                      placeholder="10"
-                      min={10}
+                      placeholder="0.1"
+                      min={0.1}
+                      step={0.1}
                       max={user?.credito}
                       value={form.credito}
                       onChange={(e) => setForm({ ...form, credito: e.target.value })}

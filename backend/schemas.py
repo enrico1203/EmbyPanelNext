@@ -36,6 +36,23 @@ class ResellerResponse(BaseModel):
         from_attributes = True
 
 
+class ResellerStatsResponse(BaseModel):
+    total_users: int
+    emby_users: int
+    jelly_users: int
+    plex_users: int
+    active_users: int
+    expired_users: int
+    expiring_7_days: int
+    total_screens: int
+    total_4k_users: int
+    movements_count: int
+
+
+class ResellerDetailResponse(ResellerResponse):
+    stats: ResellerStatsResponse
+
+
 class RicaricaRequest(BaseModel):
     amount: float
 
@@ -61,6 +78,10 @@ class CreateResellerResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ResellerPasswordUpdateRequest(BaseModel):
+    password: str
 
 
 class UpdateMeRequest(BaseModel):
@@ -273,3 +294,45 @@ class TestApiRunResponse(BaseModel):
     service: str
     action: str
     result: Any
+
+
+class InconsistencyOptionsResponse(BaseModel):
+    emby_servers: list[str]
+    jelly_servers: list[str]
+
+
+class InconsistencyCheckRequest(BaseModel):
+    service: str
+    server_name: str
+
+
+class InconsistencyDbUser(BaseModel):
+    username: str
+    expiry: Optional[int] = None
+    schermi: Optional[int] = None
+    nota: Optional[str] = None
+
+
+class InconsistencyCheckResponse(BaseModel):
+    service: str
+    server_name: str
+    server_count: int
+    db_count: int
+    server_only: list[str]
+    db_only: list[InconsistencyDbUser]
+
+
+class RenameResellerUsernameRequest(BaseModel):
+    old_username: str
+    new_username: str
+
+
+class RenameResellerUsernameResponse(BaseModel):
+    message: str
+    old_username: str
+    new_username: str
+    updated_reseller: int
+    updated_emby_users: int
+    updated_jelly_users: int
+    updated_plex_users: int
+    updated_movements: int

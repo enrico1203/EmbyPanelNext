@@ -24,12 +24,13 @@ type SortDir = "asc" | "desc";
 function DaysLeftBadge({ days }: { days: number | null }) {
   if (days === null) return <span style={{ color: "var(--txt-muted)" }}>—</span>;
   const color = days <= 0 ? "#e74c3c" : days <= 7 ? "#e67e22" : days <= 14 ? "#f5b84b" : "#2ecc71";
+  const label = days <= 0 ? `Scaduto (${days})` : `${days}g`;
   return (
     <span style={{
       background: `${color}18`, color, border: `1px solid ${color}40`,
       borderRadius: 6, padding: "2px 9px", fontSize: ".78rem", fontWeight: 600,
     }}>
-      {days <= 0 ? "Scaduto" : `${days}g`}
+      {label}
     </span>
   );
 }
@@ -37,6 +38,43 @@ function DaysLeftBadge({ days }: { days: number | null }) {
 function SortIcon({ col, sortKey, dir }: { col: SortKey; sortKey: SortKey; dir: SortDir }) {
   if (col !== sortKey) return <span style={{ opacity: 0.3, marginLeft: 4, fontSize: ".7rem" }}>↕</span>;
   return <span style={{ marginLeft: 4, fontSize: ".7rem" }}>{dir === "asc" ? "↑" : "↓"}</span>;
+}
+
+function ListSkeleton({ columns }: { columns: number }) {
+  return (
+    <>
+      <div className="page-toolbar">
+        <div style={{ height: 42, borderRadius: 12, background: "var(--bg-3)", flex: "1 1 280px", animation: "sk-pulse 1.4s ease-in-out infinite" }} />
+        <div style={{ height: 16, width: 110, borderRadius: 8, background: "var(--bg-3)", animation: "sk-pulse 1.4s ease-in-out infinite" }} />
+      </div>
+      <div className="table-card">
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {Array.from({ length: columns }).map((_, index) => (
+                  <th key={index}>
+                    <div style={{ height: 10, width: `${55 + (index % 3) * 10}%`, borderRadius: 6, background: "var(--bg-3)", animation: "sk-pulse 1.4s ease-in-out infinite" }} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 8 }).map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {Array.from({ length: columns }).map((__, colIndex) => (
+                    <td key={colIndex}>
+                      <div style={{ height: 12, width: `${60 + ((rowIndex + colIndex) % 3) * 12}%`, borderRadius: 7, background: "var(--bg-3)", animation: "sk-pulse 1.4s ease-in-out infinite", animationDelay: `${(rowIndex + colIndex) * 0.04}s` }} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
 }
 
 function sortUsers(users: JellyUser[], key: SortKey, dir: SortDir): JellyUser[] {
@@ -123,7 +161,7 @@ export default function ListaJelly() {
       )}
 
       {loading ? (
-        <div className="loading-wrap"><div className="spinner" /></div>
+        <ListSkeleton columns={isAdmin ? 8 : 7} />
       ) : error ? (
         <div className="wip-wrap" style={{ color: "#e74c3c" }}><p>Errore API: {error}</p></div>
       ) : sorted.length === 0 ? (

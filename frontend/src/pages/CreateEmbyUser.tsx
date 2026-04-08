@@ -114,7 +114,7 @@ export default function CreateEmbyUser() {
       {error && <div className="login-error">{error}</div>}
       {success && (
         <div className="save-success">
-          {success.message}. Server: {success.server}. Costo: {success.cost.toFixed(2)}€. Credito residuo: {success.remaining_credit.toFixed(2)}€.
+          {success.message}. Server: {success.server}. Costo: {success.cost.toFixed(2)} crediti. Credito residuo: {success.remaining_credit.toFixed(2)} crediti.
         </div>
       )}
 
@@ -173,12 +173,12 @@ export default function CreateEmbyUser() {
 
           <aside className="create-summary">
             <div className="create-summary-label">Riepilogo</div>
-            <div className="create-summary-value">{cost.toFixed(2)}€</div>
-            <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)}€</div>
-            <div className="create-summary-meta">Credito attuale: {Number(user.credito ?? 0).toFixed(2)}€</div>
-            <div className="create-summary-meta">Credito residuo stimato: {remainingCredit.toFixed(2)}€</div>
+            <div className="create-summary-value">{cost.toFixed(2)} crediti</div>
+            <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)} crediti</div>
+            <div className="create-summary-meta">Credito attuale: {Number(user.credito ?? 0).toFixed(2)} crediti</div>
+            <div className="create-summary-meta">Credito residuo stimato: {remainingCredit.toFixed(2)} crediti</div>
             <div className="create-note" style={{ marginTop: "14px" }}>
-              Fino a {options?.free_days_threshold ?? 3} giorni il costo resta a 0€.
+              Fino a {options?.free_days_threshold ?? 3} giorni il costo resta a 0 crediti.
             </div>
           </aside>
         </div>

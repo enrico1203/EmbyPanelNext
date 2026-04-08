@@ -364,7 +364,13 @@ def renew_emby_user(
     if days_left is not None and days_left > 7 and new_screens < current_screens:
         _raise("Non puoi diminuire gli schermi se l'utente scade tra più di 7 giorni")
 
-    cost = calculate_cost(service_name, new_screens, renew_days, db)
+    cost = calculate_cost(
+        service_name,
+        new_screens,
+        renew_days,
+        db,
+        apply_free_days_threshold=False,
+    )
     ensure_credit(current_user, cost)
 
     start_date = _aware_date(u.date) or datetime.now(timezone.utc)
@@ -507,7 +513,13 @@ def renew_jelly_user(
     if days_left is not None and days_left > 7 and new_screens < current_screens:
         _raise("Non puoi diminuire gli schermi se l'utente scade tra più di 7 giorni")
 
-    cost = calculate_cost("jellyfin", new_screens, renew_days, db)
+    cost = calculate_cost(
+        "jellyfin",
+        new_screens,
+        renew_days,
+        db,
+        apply_free_days_threshold=False,
+    )
     ensure_credit(current_user, cost)
 
     start_date = _aware_date(u.date) or datetime.now(timezone.utc)

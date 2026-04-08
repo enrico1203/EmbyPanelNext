@@ -86,10 +86,17 @@ def get_monthly_price_map(db: Session) -> dict[str, dict[int, float]]:
     return prices
 
 
-def calculate_cost(service: str, screens: int, days: int, db: Session) -> Decimal:
+def calculate_cost(
+    service: str,
+    screens: int,
+    days: int,
+    db: Session,
+    *,
+    apply_free_days_threshold: bool = True,
+) -> Decimal:
     screens = validate_screens(screens)
     days = validate_days(days)
-    if days <= FREE_DAYS_THRESHOLD:
+    if apply_free_days_threshold and days <= FREE_DAYS_THRESHOLD:
         return DECIMAL_ZERO
 
     price_row = (

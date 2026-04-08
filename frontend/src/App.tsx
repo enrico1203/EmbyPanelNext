@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Regole from "./pages/Regole";
 import Settings from "./pages/Settings";
 import ManageResellers from "./pages/ManageResellers";
 import MyResellers from "./pages/MyResellers";
@@ -15,6 +16,8 @@ import Gestione from "./pages/Gestione";
 import GestioneUtenti from "./pages/GestioneUtenti";
 import Scheduler from "./pages/Scheduler";
 import TestApi from "./pages/TestApi";
+import Inconsistenze from "./pages/Inconsistenze";
+import Funzioni from "./pages/Funzioni";
 import ListaEmby from "./pages/ListaEmby";
 import ListaJelly from "./pages/ListaJelly";
 import ListaPlex from "./pages/ListaPlex";
@@ -36,12 +39,15 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/regole" element={<Regole />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/resellers" element={<ManageResellers />} />
                 <Route path="/admin/gestione" element={<Gestione />} />
                 <Route path="/admin/gestione-utenti" element={<GestioneUtenti />} />
                 <Route path="/admin/scheduler" element={<Scheduler />} />
                 <Route path="/admin/testapi" element={<TestApi />} />
+                <Route path="/admin/inconsistenze" element={<Inconsistenze />} />
+                <Route path="/admin/funzioni" element={<Funzioni />} />
                 <Route path="/crea/emby" element={<CreateEmbyUser />} />
                 <Route path="/crea/jellyfin" element={<CreateJellyUser />} />
                 <Route path="/crea/plex" element={<CreatePlexUser />} />

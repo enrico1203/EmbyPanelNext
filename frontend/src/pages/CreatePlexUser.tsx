@@ -67,7 +67,7 @@ export default function CreatePlexUser() {
       {error && <div className="login-error">{error}</div>}
       {success && (
         <div className="save-success">
-          {success.message}. Server: {success.server}. Scadenza iniziale: {success.expiry_days} giorni. Costo: 0€.
+          {success.message}. Server: {success.server}. Scadenza iniziale: {success.expiry_days} giorni. Costo: 0 crediti.
         </div>
       )}
 
@@ -116,7 +116,7 @@ export default function CreatePlexUser() {
 
           <aside className="create-summary">
             <div className="create-summary-label">Riepilogo</div>
-            <div className="create-summary-value">0.00€</div>
+            <div className="create-summary-value">0.00 crediti</div>
             <div className="create-summary-meta">Scadenza iniziale: {options?.plex_free_days ?? 3} giorni</div>
             <div className="create-summary-meta">Solo Gmail: {options?.plex_gmail_only ? "si" : "no"}</div>
           </aside>

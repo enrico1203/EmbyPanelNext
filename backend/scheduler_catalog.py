@@ -19,6 +19,18 @@ SCRIPTS_CATALOG = {
         "script": "scripts/verificapremiere.py",
         "timeout": 1800,
     },
+    "bloccautentiemby": {
+        "name": "Blocca Utenti Emby",
+        "description": "Disabilita automaticamente su Emby gli utenti scaduti presenti in euser.",
+        "script": "scripts/bloccautentiemby.py",
+        "timeout": 300,
+    },
+    "bloccautentijelly": {
+        "name": "Blocca Utenti Jellyfin",
+        "description": "Disabilita automaticamente su Jellyfin gli utenti scaduti presenti in juser.",
+        "script": "scripts/bloccautentijelly.py",
+        "timeout": 300,
+    },
 }
 
 

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2, Tv, MailPlus } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2, Tv, MailPlus, BookOpenText, TriangleAlert, Wrench } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -49,6 +49,16 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
         >
           <span className="sb-icon"><LayoutDashboard size={17} /></span>
           <span className="sb-label">Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to="/regole"
+          className={linkClass("/regole")}
+          onClick={onCloseMobile}
+          data-tip="Regole"
+        >
+          <span className="sb-icon"><BookOpenText size={17} /></span>
+          <span className="sb-label">Regole</span>
         </NavLink>
 
         <NavLink
@@ -190,6 +200,24 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><FlaskConical size={17} /></span>
               <span className="sb-label">Test API</span>
+            </NavLink>
+            <NavLink
+              to="/admin/inconsistenze"
+              className={linkClass("/admin/inconsistenze")}
+              onClick={onCloseMobile}
+              data-tip="Inconsistenze"
+            >
+              <span className="sb-icon"><TriangleAlert size={17} /></span>
+              <span className="sb-label">Inconsistenze</span>
+            </NavLink>
+            <NavLink
+              to="/admin/funzioni"
+              className={linkClass("/admin/funzioni")}
+              onClick={onCloseMobile}
+              data-tip="Funzioni"
+            >
+              <span className="sb-icon"><Wrench size={17} /></span>
+              <span className="sb-label">Funzioni</span>
             </NavLink>
           </>
         )}

@@ -40,6 +40,11 @@ interface EmbyActionResponse {
 type ModalType = "renew" | "delete" | "password" | "note" | null;
 type Notice = { type: "success" | "error"; text: string } | null;
 
+function formatDaysStatus(days: number | null) {
+  if (days === null) return "—";
+  return days <= 0 ? `Scaduto (${days})` : `${days} giorni`;
+}
+
 function ExpiryBadge({ days }: { days: number | null }) {
   if (days === null) return <span style={{ color: "var(--txt-muted)" }}>—</span>;
   const cls = days <= 0
@@ -49,7 +54,7 @@ function ExpiryBadge({ days }: { days: number | null }) {
       : { bg: "rgba(61,213,165,.12)", color: "var(--teal)", border: "rgba(61,213,165,.28)" };
   return (
     <span style={{ background: cls.bg, color: cls.color, border: `1px solid ${cls.border}`, borderRadius: 999, padding: "3px 12px", fontSize: ".78rem", fontWeight: 700 }}>
-      {days <= 0 ? "Scaduto" : `${days} giorni`}
+      {formatDaysStatus(days)}
     </span>
   );
 }
@@ -65,8 +70,8 @@ function Row({ label, value, accent }: { label: string; value: React.ReactNode; 
   );
 }
 
-function calcCost(monthlyPrice: number, days: number, freeDaysThreshold: number) {
-  if (!days || days <= freeDaysThreshold) return 0;
+function calcCost(monthlyPrice: number, days: number) {
+  if (!days) return 0;
   return Math.round(monthlyPrice * (days / 30.416) * 100) / 100;
 }
 
@@ -155,7 +160,7 @@ export default function EmbyUserDetail() {
       `Password: ${u.password ?? "—"}`,
       `Attivazione: ${u.date_fmt ?? "—"}`,
       `Scadenza: ${u.expiry_date ?? "—"}`,
-      `Giorni rimanenti: ${u.days_left ?? "—"}`,
+      `Giorni rimanenti: ${formatDaysStatus(u.days_left)}`,
       `Server: ${u.server ?? "—"}`,
       `HTTP: ${u.server_url ?? "—"}`,
       `HTTPS: ${u.server_https ? `${u.server_https}:443` : "—"}`,
@@ -172,7 +177,7 @@ export default function EmbyUserDetail() {
 
   const serviceKey = (u?.server_type ?? "").toLowerCase() === "premium" ? "emby_premium" : "emby_normale";
   const monthlyPrice = Number(options?.prices?.[serviceKey]?.[renewScreens] ?? 0);
-  const renewCost = calcCost(monthlyPrice, Number(renewDays) || 0, options?.free_days_threshold ?? 3);
+  const renewCost = calcCost(monthlyPrice, Number(renewDays) || 0);
   const remainingEstimate = Math.round(((Number(me?.credito ?? 0) - renewCost) * 100)) / 100;
   const selectedScreens = Number(renewScreens) || 0;
   const currentScreens = Number(u?.schermi ?? 1);
@@ -216,7 +221,7 @@ export default function EmbyUserDetail() {
         days: Number(renewDays),
         screens: Number(renewScreens),
       }),
-      (response) => `${response.message}. Costo: ${(response.cost ?? 0).toFixed(2)}€. Credito residuo: ${(response.remaining_credit ?? 0).toFixed(2)}€.`,
+      (response) => `${response.message}. Costo: ${(response.cost ?? 0).toFixed(2)} crediti. Credito residuo: ${(response.remaining_credit ?? 0).toFixed(2)} crediti.`,
     );
   };
 
@@ -375,11 +380,11 @@ export default function EmbyUserDetail() {
                   )}
                   <div className="detail-summary-card">
                     <div className="create-summary-label">Costo stimato</div>
-                    <div className="create-summary-value">{renewCost.toFixed(2)}€</div>
+                    <div className="create-summary-value">{renewCost.toFixed(2)} crediti</div>
                     <div className="create-summary-meta">Piano: {serviceKey === "emby_premium" ? "Emby premium" : "Emby normale"}</div>
-                    <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)}€</div>
-                    <div className="create-summary-meta">Credito attuale: {Number(me?.credito ?? 0).toFixed(2)}€</div>
-                    <div className="create-summary-meta">Credito residuo stimato: {remainingEstimate.toFixed(2)}€</div>
+                    <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)} crediti</div>
+                    <div className="create-summary-meta">Credito attuale: {Number(me?.credito ?? 0).toFixed(2)} crediti</div>
+                    <div className="create-summary-meta">Credito residuo stimato: {remainingEstimate.toFixed(2)} crediti</div>
                   </div>
                 </div>
                 <div className="modal-footer">
