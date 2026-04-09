@@ -7,6 +7,7 @@ interface Stats {
   emby_users: number;
   jelly_users: number;
   plex_users: number;
+  plex_available_slots: number;
   total_users: number;
   total_resellers: number;
   my_resellers: number;
@@ -134,7 +135,7 @@ export default function Dashboard() {
 
       {!stats && (
         <>
-          <SkeletonSection count={4} label="streaming" />
+          <SkeletonSection count={5} label="streaming" />
           <SkeletonSection count={2} label="scadenze" />
           <SkeletonSection count={2} label="reseller" />
         </>
@@ -149,6 +150,7 @@ export default function Dashboard() {
             <StatCard icon={<Tv size={18} />} label="Utenti Emby" value={stats.emby_users} accent="#f5b84b" delay=".06s" />
             <StatCard icon={<Tv size={18} />} label="Utenti Jellyfin" value={stats.jelly_users} accent="#00a4dc" delay=".12s" />
             <StatCard icon={<Tv size={18} />} label="Utenti Plex" value={stats.plex_users} accent="#e5a00d" delay=".18s" />
+            <StatCard icon={<Tv size={18} />} label="Posti disponibili Plex" value={stats.plex_available_slots} accent="#f59e0b" delay=".24s" />
           </div>
 
           {/* Scadenze */}

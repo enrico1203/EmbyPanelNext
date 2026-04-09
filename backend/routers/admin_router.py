@@ -202,7 +202,7 @@ def _save_plex_row(db: Session, payload: PlexUserRowSaveRequest) -> PlexUserMana
             {"invito": row.invito, **params},
         )
     invito = int(result.scalar_one())
-    _sync_invito_sequence(db, "puser", 'public."User_invito_seq"')
+    _sync_invito_sequence(db, "puser", "public.puser_invito_seq")
     return _plex_row_response(db, invito)
 
 
@@ -246,7 +246,7 @@ def _save_jelly_row(db: Session, payload: JellyUserRowSaveRequest) -> JellyUserM
             {"invito": row.invito, **params},
         )
     invito = int(result.scalar_one())
-    _sync_invito_sequence(db, "juser", 'public."jUser_invito_seq"')
+    _sync_invito_sequence(db, "juser", "public.juser_invito_seq")
     return _jelly_row_response(db, invito)
 
 
@@ -290,7 +290,7 @@ def _save_emby_row(db: Session, payload: EmbyUserRowSaveRequest) -> EmbyUserMana
             {"invito": row.invito, **params},
         )
     invito = int(result.scalar_one())
-    _sync_invito_sequence(db, "euser", 'public."eUser_invito_seq"')
+    _sync_invito_sequence(db, "euser", "public.euser_invito_seq")
     return _emby_row_response(db, invito)
 
 
@@ -429,6 +429,7 @@ def save_platform_management(
             nome=_require_text(row.nome, "plex.nome"),
             url=_require_text(row.url, "plex.url"),
             token=_require_text(row.token, "plex.token"),
+            capienza=row.capienza,
         )
         for row in payload.plex
     ]
@@ -600,9 +601,9 @@ def save_user_management(
                     {"invito": row.invito, **base_params},
                 )
 
-        _sync_invito_sequence(db, "puser", 'public."User_invito_seq"')
-        _sync_invito_sequence(db, "juser", 'public."jUser_invito_seq"')
-        _sync_invito_sequence(db, "euser", 'public."eUser_invito_seq"')
+        _sync_invito_sequence(db, "puser", "public.puser_invito_seq")
+        _sync_invito_sequence(db, "juser", "public.juser_invito_seq")
+        _sync_invito_sequence(db, "euser", "public.euser_invito_seq")
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -693,7 +694,7 @@ def delete_plex_user_row(
     db: Session = Depends(get_db),
 ):
     db.execute(text("DELETE FROM public.puser WHERE invito = :invito"), {"invito": invito})
-    _sync_invito_sequence(db, "puser", 'public."User_invito_seq"')
+    _sync_invito_sequence(db, "puser", "public.puser_invito_seq")
     db.commit()
     return {"message": "Utente Plex rimosso"}
 
@@ -705,7 +706,7 @@ def delete_jelly_user_row(
     db: Session = Depends(get_db),
 ):
     db.execute(text("DELETE FROM public.juser WHERE invito = :invito"), {"invito": invito})
-    _sync_invito_sequence(db, "juser", 'public."jUser_invito_seq"')
+    _sync_invito_sequence(db, "juser", "public.juser_invito_seq")
     db.commit()
     return {"message": "Utente Jellyfin rimosso"}
 
@@ -717,6 +718,6 @@ def delete_emby_user_row(
     db: Session = Depends(get_db),
 ):
     db.execute(text("DELETE FROM public.euser WHERE invito = :invito"), {"invito": invito})
-    _sync_invito_sequence(db, "euser", 'public."eUser_invito_seq"')
+    _sync_invito_sequence(db, "euser", "public.euser_invito_seq")
     db.commit()
     return {"message": "Utente Emby rimosso"}

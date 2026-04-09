@@ -7,6 +7,7 @@ import api from "../api/client";
 interface ProvisioningOptions {
   plex_free_days: number;
   plex_gmail_only: boolean;
+  plex_available_slots: number;
 }
 
 interface ProvisioningResult {
@@ -119,6 +120,7 @@ export default function CreatePlexUser() {
             <div className="create-summary-value">0.00 crediti</div>
             <div className="create-summary-meta">Scadenza iniziale: {options?.plex_free_days ?? 3} giorni</div>
             <div className="create-summary-meta">Solo Gmail: {options?.plex_gmail_only ? "si" : "no"}</div>
+            <div className="create-summary-meta">Posti disponibili Plex: {options?.plex_available_slots ?? 0}</div>
           </aside>
         </div>
       )}

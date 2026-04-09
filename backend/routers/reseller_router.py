@@ -19,6 +19,7 @@ from schemas import (
     ResellerPasswordUpdateRequest,
 )
 from auth import require_master_or_admin
+from telegram_logger import log_reseller_recharge
 
 router = APIRouter()
 
@@ -171,6 +172,15 @@ def create_reseller(
     db.commit()
     db.refresh(new_reseller)
     db.refresh(current_user)
+    log_reseller_recharge(
+        actor=current_user.username,
+        target=new_reseller.username,
+        amount=body.credito,
+        sender_remaining_credit=current_user.credito,
+        target_new_credit=new_reseller.credito,
+        target_role=new_reseller.ruolo,
+        created=True,
+    )
 
     return CreateResellerResponse(
         id=new_reseller.id,
@@ -300,6 +310,15 @@ def ricarica(
     db.commit()
     db.refresh(current_user)
     db.refresh(reseller)
+    log_reseller_recharge(
+        actor=current_user.username,
+        target=reseller.username,
+        amount=body.amount,
+        sender_remaining_credit=current_user.credito,
+        target_new_credit=reseller.credito,
+        target_role=reseller.ruolo,
+        created=False,
+    )
 
     return RicaricaResponse(
         my_new_balance=current_user.credito,

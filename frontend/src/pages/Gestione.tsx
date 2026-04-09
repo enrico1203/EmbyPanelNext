@@ -10,6 +10,7 @@ interface PlexRow {
   nome: string;
   url: string;
   token: string;
+  capienza: string;
 }
 
 interface EmbyRow {
@@ -62,6 +63,7 @@ const plexFields: FieldConfig<PlexRow>[] = [
   { key: "nome", label: "Nome", placeholder: "es. plex-main" },
   { key: "url", label: "URL", placeholder: "https://..." },
   { key: "token", label: "Token", placeholder: "Token Plex" },
+  { key: "capienza", label: "Capienza", type: "number", placeholder: "50" },
 ];
 
 const jellyFields: FieldConfig<JellyRow>[] = [
@@ -88,6 +90,7 @@ const emptyPlexRow = (): PlexRow => ({
   nome: "",
   url: "",
   token: "",
+  capienza: "",
 });
 
 const emptyJellyRow = (): JellyRow => ({
@@ -110,6 +113,7 @@ function mapResponse(data: any): ManagementState {
           nome: row.nome ?? "",
           url: row.url ?? "",
           token: row.token ?? "",
+          capienza: row.capienza != null ? String(row.capienza) : "",
         }))
       : [],
     emby: Array.isArray(data?.emby)
@@ -245,6 +249,7 @@ export default function Gestione() {
           nome: row.nome.trim(),
           url: row.url.trim(),
           token: row.token.trim(),
+          capienza: row.capienza.trim() ? Number(row.capienza) : null,
         })),
         emby: form.emby.map((row) => ({
           nome: row.nome.trim(),

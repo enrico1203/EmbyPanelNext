@@ -11,6 +11,7 @@ import embyapi
 import jellyapi
 import plexapi
 from provisioning import _apply_credit_charge, _raise, calculate_cost, ensure_credit, quantize_amount, validate_days, validate_password, validate_screens
+from telegram_logger import log_4k_change, log_user_deleted, log_user_renewed, send_reseller_calendar_notification
 
 router = APIRouter()
 
@@ -330,6 +331,24 @@ def renew_plex_user(
     db.commit()
     db.refresh(u)
     db.refresh(current_user)
+    log_user_renewed(
+        actor=current_user.username,
+        service="Plex",
+        username=u.pmail or str(invito),
+        server=u.server or "—",
+        days=renew_days,
+        screens=screens,
+        cost=float(cost),
+        remaining_credit=float(remaining_credit),
+    )
+    expiry_at = (_aware_date(u.date) or datetime.now(timezone.utc)) + timedelta(days=int(u.expiry or 0))
+    send_reseller_calendar_notification(
+        chat_id=current_user.idtelegram,
+        action="renewed",
+        username=u.pmail or str(invito),
+        expiry_at=expiry_at,
+        service="Plex",
+    )
 
     return PlexActionResponse(
         message=f"Utente Plex {u.pmail} rinnovato con successo",
@@ -395,6 +414,24 @@ def renew_emby_user(
     db.commit()
     db.refresh(u)
     db.refresh(current_user)
+    log_user_renewed(
+        actor=current_user.username,
+        service="Emby",
+        username=username,
+        server=server_name,
+        days=renew_days,
+        screens=new_screens,
+        cost=float(cost),
+        remaining_credit=float(remaining_credit),
+    )
+    expiry_at = (_aware_date(u.date) or datetime.now(timezone.utc)) + timedelta(days=int(u.expiry or 0))
+    send_reseller_calendar_notification(
+        chat_id=current_user.idtelegram,
+        action="renewed",
+        username=username,
+        expiry_at=expiry_at,
+        service="Emby",
+    )
 
     return EmbyActionResponse(
         message=f"Utente Emby {username} rinnovato con successo",
@@ -421,6 +458,12 @@ def delete_emby_user(
     _record_zero_cost_movement(db, current_user, "cancella", username or str(invito))
     db.delete(u)
     db.commit()
+    log_user_deleted(
+        actor=current_user.username,
+        service="Emby",
+        username=username or str(invito),
+        server=server_name or "—",
+    )
     return EmbyDeleteResponse(message=f"Utente Emby {username or invito} cancellato con successo")
 
 
@@ -437,6 +480,13 @@ def disable_emby_4k(
     _record_zero_cost_movement(db, current_user, "togli4k", u.user or str(invito))
     db.commit()
     db.refresh(u)
+    log_4k_change(
+        actor=current_user.username,
+        service="Emby",
+        username=u.user or str(invito),
+        server=u.server or "—",
+        enabled=False,
+    )
     return EmbyActionResponse(message=f"4K disattivato per {u.user}", user=_emby_detail(u, db))
 
 
@@ -453,6 +503,13 @@ def enable_emby_4k(
     _record_zero_cost_movement(db, current_user, "metti4k", u.user or str(invito))
     db.commit()
     db.refresh(u)
+    log_4k_change(
+        actor=current_user.username,
+        service="Emby",
+        username=u.user or str(invito),
+        server=u.server or "—",
+        enabled=True,
+    )
     return EmbyActionResponse(message=f"4K attivato per {u.user}", user=_emby_detail(u, db))
 
 
@@ -544,6 +601,24 @@ def renew_jelly_user(
     db.commit()
     db.refresh(u)
     db.refresh(current_user)
+    log_user_renewed(
+        actor=current_user.username,
+        service="Jellyfin",
+        username=username,
+        server=server_name,
+        days=renew_days,
+        screens=new_screens,
+        cost=float(cost),
+        remaining_credit=float(remaining_credit),
+    )
+    expiry_at = (_aware_date(u.date) or datetime.now(timezone.utc)) + timedelta(days=int(u.expiry or 0))
+    send_reseller_calendar_notification(
+        chat_id=current_user.idtelegram,
+        action="renewed",
+        username=username,
+        expiry_at=expiry_at,
+        service="Jellyfin",
+    )
 
     return JellyActionResponse(
         message=f"Utente Jellyfin {username} rinnovato con successo",
@@ -570,6 +645,12 @@ def delete_jelly_user(
     _record_zero_cost_movement(db, current_user, "cancellaj", username or str(invito))
     db.delete(u)
     db.commit()
+    log_user_deleted(
+        actor=current_user.username,
+        service="Jellyfin",
+        username=username or str(invito),
+        server=server_name or "—",
+    )
     return JellyDeleteResponse(message=f"Utente Jellyfin {username or invito} cancellato con successo")
 
 
@@ -586,6 +667,13 @@ def disable_jelly_4k(
     _record_zero_cost_movement(db, current_user, "jtogli4k", u.user or str(invito))
     db.commit()
     db.refresh(u)
+    log_4k_change(
+        actor=current_user.username,
+        service="Jellyfin",
+        username=u.user or str(invito),
+        server=u.server or "—",
+        enabled=False,
+    )
     return JellyActionResponse(message=f"4K disattivato per {u.user}", user=_jelly_detail(u, db))
 
 
@@ -602,6 +690,13 @@ def enable_jelly_4k(
     _record_zero_cost_movement(db, current_user, "jmetti4k", u.user or str(invito))
     db.commit()
     db.refresh(u)
+    log_4k_change(
+        actor=current_user.username,
+        service="Jellyfin",
+        username=u.user or str(invito),
+        server=u.server or "—",
+        enabled=True,
+    )
     return JellyActionResponse(message=f"4K attivato per {u.user}", user=_jelly_detail(u, db))
 
 
@@ -657,4 +752,10 @@ def delete_plex_user(
     _record_zero_cost_movement(db, current_user, "cancellaplex", plex_name or str(invito))
     db.delete(u)
     db.commit()
+    log_user_deleted(
+        actor=current_user.username,
+        service="Plex",
+        username=plex_name or str(invito),
+        server=server_name or "—",
+    )
     return PlexDeleteResponse(message=f"Utente Plex {plex_name or invito} cancellato con successo")

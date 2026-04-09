@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from auth import get_current_user
 from database import get_db
-from models import Reseller
+from models import PlexServer, PlexUser, Reseller
 from provisioning import create_emby_user, create_jelly_user, create_plex_user, get_monthly_price_map
 
 router = APIRouter()
@@ -20,6 +20,7 @@ class ProvisioningOptionsResponse(BaseModel):
     free_days_threshold: int = 3
     plex_free_days: int = 3
     plex_gmail_only: bool = True
+    plex_available_slots: int = 0
 
 
 class EmbyProvisionRequest(BaseModel):
@@ -57,9 +58,17 @@ def get_provisioning_options(
     current_user: Reseller = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    plex_available_slots = 0
+    for server in db.query(PlexServer).all():
+        if server.capienza is None:
+            continue
+        used = db.query(PlexUser).filter(PlexUser.server == server.nome).count()
+        plex_available_slots += max(int(server.capienza) - used, 0)
+
     return ProvisioningOptionsResponse(
         credito=float(current_user.credito or 0),
         prices=get_monthly_price_map(db),
+        plex_available_slots=plex_available_slots,
     )
 
 

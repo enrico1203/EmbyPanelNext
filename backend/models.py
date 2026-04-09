@@ -44,6 +44,7 @@ class PlexServer(Base):
     nome = Column(Text, primary_key=True)
     url = Column(Text, nullable=False)
     token = Column(Text, nullable=False)
+    capienza = Column(Integer, nullable=True)
 
 
 class EmbyServer(Base):

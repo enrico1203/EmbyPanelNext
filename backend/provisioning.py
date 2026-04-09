@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException, status
@@ -13,6 +13,7 @@ import embyapi
 import jellyapi
 import plexapi
 from models import EmbyServer, EmbyUser, JellyServer, JellyUser, Movimento, PlexServer, PlexUser, Prezzo, Reseller
+from telegram_logger import log_user_created, send_reseller_calendar_notification
 
 DECIMAL_ZERO = Decimal("0.00")
 FREE_DAYS_THRESHOLD = 3
@@ -223,11 +224,33 @@ def choose_plex_server(db: Session) -> PlexServer:
     servers = db.query(PlexServer).order_by(PlexServer.nome.asc()).all()
     if not servers:
         _raise("Nessun server Plex configurato")
-    candidates = []
+
+    candidates: list[tuple[int, str, PlexServer]] = []
     for server in servers:
         used = db.query(PlexUser).filter(PlexUser.server == server.nome).count()
+        if server.capienza is not None and used >= int(server.capienza):
+            continue
         candidates.append((used, server.nome, server))
+
+    if not candidates:
+        _raise("Tutti i server Plex sono pieni")
+
     return min(candidates, key=lambda item: (item[0], item[1]))[2]
+
+
+def _server_access_url(*, https_value: str | None = None, url_value: str | None = None) -> str | None:
+    https_clean = (https_value or "").strip().rstrip("/")
+    if https_clean:
+        if https_clean.startswith(("http://", "https://")):
+            return https_clean
+        return f"https://{https_clean}:443"
+
+    url_clean = (url_value or "").strip().rstrip("/")
+    if not url_clean:
+        return None
+    if url_clean.startswith(("http://", "https://")):
+        return url_clean
+    return f"http://{url_clean}"
 
 
 def create_emby_user(
@@ -262,12 +285,13 @@ def create_emby_user(
         embyapi.default_user_policy(server.nome, user_id, screens, db=db)
         embyapi.disable_4k(server.nome, username, db=db)
 
+        created_at = datetime.now(timezone.utc)
         remaining = _apply_credit_charge(db, current_user, cost, "crea", username)
         db.add(
             EmbyUser(
                 reseller=current_user.username,
                 user=username,
-                date=datetime.now(timezone.utc),
+                date=created_at,
                 expiry=expiry_days,
                 server=server.nome,
                 schermi=screens,
@@ -279,6 +303,25 @@ def create_emby_user(
         )
         db.commit()
         db.refresh(current_user)
+        log_user_created(
+            actor=current_user.username,
+            service="Emby",
+            username=username,
+            server=server.nome,
+            days=expiry_days,
+            screens=screens,
+            cost=float(cost),
+            remaining_credit=float(remaining),
+            extra=f"Tipo: {(server.tipo or account_type or 'normale')}",
+        )
+        send_reseller_calendar_notification(
+            chat_id=current_user.idtelegram,
+            action="created",
+            username=username,
+            expiry_at=created_at + timedelta(days=expiry_days),
+            service="Emby",
+            server_url=_server_access_url(https_value=server.https, url_value=server.url),
+        )
         return ProvisionResult(
             service="emby",
             username=username,
@@ -324,12 +367,13 @@ def create_jelly_user(
         jellyapi.default_user_policy(server.nome, user_id, screens, db=db)
         jellyapi.disable_4k(server.nome, username, screens, db=db)
 
+        created_at = datetime.now(timezone.utc)
         remaining = _apply_credit_charge(db, current_user, cost, "creaj", username)
         db.add(
             JellyUser(
                 reseller=current_user.username,
                 user=username,
-                date=datetime.now(timezone.utc),
+                date=created_at,
                 expiry=expiry_days,
                 server=server.nome,
                 schermi=screens,
@@ -341,6 +385,24 @@ def create_jelly_user(
         )
         db.commit()
         db.refresh(current_user)
+        log_user_created(
+            actor=current_user.username,
+            service="Jellyfin",
+            username=username,
+            server=server.nome,
+            days=expiry_days,
+            screens=screens,
+            cost=float(cost),
+            remaining_credit=float(remaining),
+        )
+        send_reseller_calendar_notification(
+            chat_id=current_user.idtelegram,
+            action="created",
+            username=username,
+            expiry_at=created_at + timedelta(days=expiry_days),
+            service="Jellyfin",
+            server_url=_server_access_url(https_value=server.https, url_value=server.url),
+        )
         return ProvisionResult(
             service="jelly",
             username=username,
@@ -369,11 +431,12 @@ def create_plex_user(
     server = choose_plex_server(db)
     plexapi.send_invite(server.nome, email, db=db)
     remaining = _apply_credit_charge(db, current_user, DECIMAL_ZERO, "creaplex", email)
+    created_at = datetime.now(timezone.utc)
     db.add(
         PlexUser(
             reseller=current_user.username,
             pmail=email,
-            date=datetime.now(timezone.utc),
+            date=created_at,
             expiry=3,
             nschermi=2,
             server=server.nome,
@@ -383,6 +446,25 @@ def create_plex_user(
     )
     db.commit()
     db.refresh(current_user)
+    log_user_created(
+        actor=current_user.username,
+        service="Plex",
+        username=email,
+        server=server.nome,
+        days=3,
+        screens=2,
+        cost=0,
+        remaining_credit=float(remaining),
+        extra="Tipo: invito Gmail",
+    )
+    send_reseller_calendar_notification(
+        chat_id=current_user.idtelegram,
+        action="created",
+        username=email,
+        expiry_at=created_at + timedelta(days=3),
+        service="Plex",
+        server_url=_server_access_url(url_value=server.url),
+    )
     return ProvisionResult(
         service="plex",
         username=email,

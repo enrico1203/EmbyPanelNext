@@ -127,6 +127,7 @@ class PlexConfigEntry(BaseModel):
     nome: str
     url: str
     token: str
+    capienza: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -308,8 +309,12 @@ class InconsistencyCheckRequest(BaseModel):
 
 class InconsistencyDbUser(BaseModel):
     username: str
+    reseller: Optional[str] = None
     expiry: Optional[int] = None
     schermi: Optional[int] = None
+    k4: Optional[str] = None
+    download: Optional[str] = None
+    password: Optional[str] = None
     nota: Optional[str] = None
 
 
@@ -320,6 +325,40 @@ class InconsistencyCheckResponse(BaseModel):
     db_count: int
     server_only: list[str]
     db_only: list[InconsistencyDbUser]
+
+
+class InconsistencyResolveToDbRequest(BaseModel):
+    service: str
+    server_name: str
+    username: str
+    reseller: str
+    expiry: int
+    schermi: int
+    password: str
+    k4: Optional[str] = "false"
+    download: Optional[str] = "false"
+    nota: Optional[str] = None
+
+
+class InconsistencyRecreateRemoteRequest(BaseModel):
+    service: str
+    server_name: str
+    username: str
+    password: Optional[str] = None
+
+
+class InconsistencyDeleteRemoteRequest(BaseModel):
+    service: str
+    server_name: str
+    username: str
+
+
+class InconsistencyResolveResponse(BaseModel):
+    action: str
+    service: str
+    server_name: str
+    username: str
+    message: str
 
 
 class RenameResellerUsernameRequest(BaseModel):

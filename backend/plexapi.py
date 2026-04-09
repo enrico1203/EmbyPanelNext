@@ -23,6 +23,7 @@ class PlexServerConfig:
     nome: str
     url: str
     token: str
+    capienza: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -116,7 +117,15 @@ else:
 def list_servers(db: Session | None = None) -> list[PlexServerConfig]:
     with _db_scope(db) as session:
         rows = session.query(PlexServerModel).order_by(PlexServerModel.nome.asc()).all()
-        return [PlexServerConfig(nome=row.nome, url=row.url or "", token=row.token or "") for row in rows]
+        return [
+            PlexServerConfig(
+                nome=row.nome,
+                url=row.url or "",
+                token=row.token or "",
+                capienza=row.capienza,
+            )
+            for row in rows
+        ]
 
 
 def get_server_config(server_name: str, db: Session | None = None) -> PlexServerConfig:
@@ -126,7 +135,7 @@ def get_server_config(server_name: str, db: Session | None = None) -> PlexServer
             raise ValueError(f"Server Plex '{server_name}' non trovato")
         if not row.url or not row.token:
             raise ValueError(f"Server Plex '{server_name}' incompleto: servono url e token")
-        return PlexServerConfig(nome=row.nome, url=row.url, token=row.token)
+        return PlexServerConfig(nome=row.nome, url=row.url, token=row.token, capienza=row.capienza)
 
 
 def verify_email(address: str) -> bool:
@@ -208,7 +217,8 @@ def get_server_usage(
     db: Session | None = None,
 ) -> dict[str, Any]:
     used = get_user_count(server_name, db)
-    max_slots = (max_overrides or {}).get(server_name, default_max)
+    config = get_server_config(server_name, db)
+    max_slots = (max_overrides or {}).get(server_name, config.capienza or default_max)
     available = max(max_slots - used, 0)
     return {
         "server": server_name,

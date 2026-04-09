@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from database import get_db
-from models import EmbyUser, JellyUser, PlexUser, Reseller
+from models import EmbyUser, JellyUser, PlexServer, PlexUser, Reseller
 from auth import get_current_user
 
 router = APIRouter()
@@ -17,6 +17,7 @@ class DashboardStats(BaseModel):
     emby_users: int
     jelly_users: int
     plex_users: int
+    plex_available_slots: int
     total_users: int
     total_resellers: int
     my_resellers: int
@@ -63,6 +64,12 @@ def get_dashboard_stats(
     emby_count = emby_q().count()
     jelly_count = jelly_q().count()
     plex_count = plex_q().count()
+    plex_available_slots = 0
+    for server in db.query(PlexServer).all():
+        if server.capienza is None:
+            continue
+        used = db.query(PlexUser).filter(PlexUser.server == server.nome).count()
+        plex_available_slots += max(int(server.capienza) - used, 0)
 
     # Expiring / expired — scan all users
     expiring_7 = 0
@@ -103,6 +110,7 @@ def get_dashboard_stats(
         emby_users=emby_count,
         jelly_users=jelly_count,
         plex_users=plex_count,
+        plex_available_slots=plex_available_slots,
         total_users=emby_count + jelly_count + plex_count,
         total_resellers=total_resellers,
         my_resellers=my_resellers,
