@@ -1,19 +1,57 @@
 import { useEffect, useRef, useState } from "react";
-import { Coins, User, Shield, Tv, Users, AlertTriangle, Clock, TrendingUp, Zap } from "lucide-react";
+import { Coins, User, Shield, Tv, Users, AlertTriangle, Clock, TrendingUp, MessageSquare } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
+
+/* ── Mini markdown renderer ───────────────────────────────── */
+function renderMarkdown(raw: string): React.ReactNode[] {
+  const lines = raw.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  let key = 0;
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    nodes.push(
+      <ul key={key++} style={{ margin: "6px 0 6px 1.2rem", padding: 0 }}>
+        {listItems.map((item, i) => (
+          <li key={i} style={{ marginBottom: 4, lineHeight: 1.65 }}>{renderInline(item)}</li>
+        ))}
+      </ul>
+    );
+    listItems = [];
+  };
+
+  const renderInline = (text: string): React.ReactNode[] =>
+    text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
+      return <span key={i}>{part}</span>;
+    });
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^[-•]\s+/.test(trimmed)) { listItems.push(trimmed.replace(/^[-•]\s+/, "")); continue; }
+    flushList();
+    if (trimmed === "") { nodes.push(<div key={key++} style={{ height: 7 }} />); continue; }
+    nodes.push(<div key={key++} style={{ lineHeight: 1.7 }}>{renderInline(trimmed)}</div>);
+  }
+  flushList();
+  return nodes;
+}
 
 interface Stats {
   emby_users: number;
   jelly_users: number;
   plex_users: number;
   plex_available_slots: number;
+  plex_total_capacity: number;
   total_users: number;
   total_resellers: number;
   my_resellers: number;
   expiring_7: number;
   expired: number;
-  dashboard_message?: string | null;
+  master_message?: string | null;
   monthly_recharges_remaining?: number | null;
   cat_url: string | null;
 }
@@ -89,24 +127,6 @@ function SectionLabel({ children, dotColor }: { children: string; dotColor?: str
   );
 }
 
-/* ── Dashboard message parser ─────────────────────────────── */
-function parseDashboardMessage(message?: string | null) {
-  const lines = (message ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (!lines.length) return { title: "", paragraphs: [] as string[], items: [] as string[] };
-  const [rawTitle, ...rest] = lines;
-  const title = rawTitle.replace(/^!+|!+$/g, "").trim();
-  const paragraphs: string[] = [];
-  const items: string[] = [];
-  rest.forEach((line) => {
-    if (/^[-•]\s*/.test(line)) { items.push(line.replace(/^[-•]\s*/, "").trim()); return; }
-    paragraphs.push(line);
-  });
-  return { title, paragraphs, items };
-}
-
 /* ── Stat Card ────────────────────────────────────────────── */
 interface StatCardProps {
   icon: React.ReactNode;
@@ -176,7 +196,6 @@ export default function Dashboard() {
   const [countersStarted, setCountersStarted] = useState(false);
   const isAdmin = user?.ruolo === "admin";
   const isMaster = user?.ruolo === "master";
-  const parsedMessage = parseDashboardMessage(stats?.dashboard_message);
 
   useEffect(() => {
     api.get("/dashboard/stats").then(r => {
@@ -196,9 +215,7 @@ export default function Dashboard() {
     return () => observer.disconnect();
   }, [stats]);
 
-  const totalPlexCapacity = stats
-    ? stats.plex_users + stats.plex_available_slots
-    : 0;
+  const totalPlexCapacity = stats?.plex_total_capacity ?? 0;
 
   return (
     <div className="pg" ref={cardsRef}>
@@ -206,68 +223,51 @@ export default function Dashboard() {
         Dashboard
       </div>
 
-      {/* ── Comunicazione ── */}
-      {stats && (stats.dashboard_message || (stats.monthly_recharges_remaining !== null && stats.monthly_recharges_remaining !== undefined)) && (
+      {/* ── Messaggio del master ── */}
+      {stats?.master_message && (
         <div
           className="fi visible"
           style={{
             marginTop: 4,
-            marginBottom: 24,
+            marginBottom: 16,
             padding: "20px 22px",
             borderRadius: 18,
-            border: "1px solid rgba(245,184,75,.28)",
+            border: "1px solid rgba(108,142,247,.28)",
             background:
-              "linear-gradient(145deg, rgba(245,184,75,.18), rgba(245,184,75,.06) 55%, rgba(255,255,255,.01))",
+              "linear-gradient(145deg, rgba(108,142,247,.14), rgba(108,142,247,.05) 55%, rgba(255,255,255,.01))",
             boxShadow: "0 12px 36px rgba(0,0,0,.1)",
           }}
         >
-          {stats.dashboard_message && (
-            <>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 7,
-                fontSize: ".68rem", fontWeight: 800, textTransform: "uppercase",
-                letterSpacing: ".15em", color: "#d18b18", marginBottom: 12,
-              }}>
-                <Zap size={12} />
-                Comunicazione
-              </div>
-              {parsedMessage.title && (
-                <div style={{
-                  color: "var(--txt)", fontSize: "1.1rem", fontWeight: 900,
-                  lineHeight: 1.3, marginBottom: parsedMessage.paragraphs.length || parsedMessage.items.length ? 10 : 0,
-                }}>
-                  {parsedMessage.title}
-                </div>
-              )}
-              {parsedMessage.paragraphs.map((p, i) => (
-                <div key={i} style={{ color: "var(--txt)", lineHeight: 1.7, fontSize: ".95rem", marginBottom: 8 }}>
-                  {p}
-                </div>
-              ))}
-              {parsedMessage.items.length > 0 && (
-                <ul style={{ margin: 0, paddingLeft: "1.2rem", color: "var(--txt)", lineHeight: 1.72, fontSize: ".95rem" }}>
-                  {parsedMessage.items.map((item) => (
-                    <li key={item} style={{ marginBottom: 5 }}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-          {stats.monthly_recharges_remaining !== null && stats.monthly_recharges_remaining !== undefined && (
-            <div style={{
-              marginTop: stats.dashboard_message ? 14 : 0,
-              paddingTop: stats.dashboard_message ? 14 : 0,
-              borderTop: stats.dashboard_message ? "1px solid rgba(245,184,75,.2)" : "none",
-              display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap",
-            }}>
-              <span style={{ fontSize: ".85rem", color: "var(--txt-soft)", fontWeight: 700 }}>
-                Ricariche residue questo mese:
-              </span>
-              <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--txt)" }}>
-                {stats.monthly_recharges_remaining}
-              </span>
-            </div>
-          )}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 7,
+            fontSize: ".68rem", fontWeight: 800, textTransform: "uppercase",
+            letterSpacing: ".15em", color: "#6c8ef7", marginBottom: 12,
+          }}>
+            <MessageSquare size={12} />
+            Messaggio dal tuo master
+          </div>
+          <div style={{ color: "var(--txt)", fontSize: ".95rem" }}>
+            {renderMarkdown(stats.master_message)}
+          </div>
+        </div>
+      )}
+
+      {/* ── Ricariche residue ── */}
+      {stats?.monthly_recharges_remaining !== null && stats?.monthly_recharges_remaining !== undefined && (
+        <div className="fi visible" style={{
+          marginTop: 4, marginBottom: 16,
+          padding: "14px 18px",
+          borderRadius: 14,
+          border: "1px solid rgba(245,184,75,.25)",
+          background: "linear-gradient(145deg, rgba(245,184,75,.1), rgba(245,184,75,.03))",
+          display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: ".85rem", color: "var(--txt-soft)", fontWeight: 700 }}>
+            Ricariche residue questo mese:
+          </span>
+          <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--txt)" }}>
+            {stats.monthly_recharges_remaining}
+          </span>
         </div>
       )}
 

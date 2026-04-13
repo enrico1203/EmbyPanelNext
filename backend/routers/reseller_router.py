@@ -2,6 +2,7 @@ import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import List
@@ -18,8 +19,9 @@ from schemas import (
     CreateResellerRequest,
     CreateResellerResponse,
     ResellerPasswordUpdateRequest,
+    MessaggioUpdateRequest,
 )
-from auth import require_master_or_admin
+from auth import get_current_user, require_master_or_admin
 from telegram_logger import log_reseller_recharge
 
 router = APIRouter()
@@ -452,3 +454,35 @@ def ricarica(
         reseller_new_balance=reseller.credito,
         reseller_ruolo=reseller.ruolo,
     )
+
+
+class MessaggioResponse(BaseModel):
+    messaggio: str | None = None
+
+
+@router.get("/messaggio", response_model=MessaggioResponse)
+def get_messaggio(
+    current_user: Reseller = Depends(require_master_or_admin),
+    db: Session = Depends(get_db),
+):
+    """Restituisce il messaggio attuale del master autenticato."""
+    return MessaggioResponse(messaggio=current_user.messaggio)
+
+
+@router.put("/messaggio", response_model=MessaggioResponse)
+def update_messaggio(
+    body: MessaggioUpdateRequest,
+    current_user: Reseller = Depends(require_master_or_admin),
+    db: Session = Depends(get_db),
+):
+    """Aggiorna (o cancella) il messaggio del master autenticato."""
+    testo = (body.messaggio or "").strip() or None
+    if testo and len(testo) > 4000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Il messaggio non può superare i 4000 caratteri",
+        )
+    current_user.messaggio = testo
+    db.commit()
+    db.refresh(current_user)
+    return MessaggioResponse(messaggio=current_user.messaggio)

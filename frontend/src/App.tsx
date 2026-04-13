@@ -28,6 +28,7 @@ import PlexUserDetail from "./pages/PlexUserDetail";
 import CreateEmbyUser from "./pages/CreateEmbyUser";
 import CreateJellyUser from "./pages/CreateJellyUser";
 import CreatePlexUser from "./pages/CreatePlexUser";
+import ImpostaMessaggio from "./pages/ImpostaMessaggio";
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="/crea/jellyfin" element={<CreateJellyUser />} />
                 <Route path="/crea/plex" element={<CreatePlexUser />} />
                 <Route path="/resellers" element={<MyResellers />} />
+                <Route path="/resellers/messaggio" element={<ImpostaMessaggio />} />
                 <Route path="/resellers/:id" element={<ResellerDetail />} />
                 <Route path="/admin/prezzi" element={<Prezzi />} />
                 <Route path="/movimenti" element={<Movimenti />} />

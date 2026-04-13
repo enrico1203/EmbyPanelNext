@@ -12,6 +12,7 @@ from auth import get_current_user
 router = APIRouter()
 
 CAT_API_KEY = os.getenv("CAT_API_KEY", "")
+_MONTHLY_RECHARGES_LIMIT = os.getenv("RICARICHEMENSILI", "")
 
 
 class DashboardStats(BaseModel):
@@ -19,12 +20,13 @@ class DashboardStats(BaseModel):
     jelly_users: int
     plex_users: int
     plex_available_slots: int
+    plex_total_capacity: int
     total_users: int
     total_resellers: int
     my_resellers: int
     expiring_7: int
     expired: int
-    dashboard_message: Optional[str] = None
+    master_message: Optional[str] = None
     monthly_recharges_remaining: Optional[int] = None
     cat_url: Optional[str] = None
 
@@ -35,8 +37,7 @@ def get_dashboard_stats(
     db: Session = Depends(get_db),
 ):
     is_admin = current_user.ruolo == "admin"
-    dashboard_message = (os.getenv("MESSAGGIO", "") or "").strip()
-    monthly_recharges_limit_raw = (os.getenv("RICARICHEMENSILI", "") or "").strip()
+    monthly_recharges_limit_raw = (_MONTHLY_RECHARGES_LIMIT or "").strip()
 
     def emby_q():
         q = db.query(EmbyUser)
@@ -75,11 +76,14 @@ def get_dashboard_stats(
     jelly_count = jelly_q().count()
     plex_count = plex_q().count()
     plex_available_slots = 0
+    plex_total_capacity = 0
     for server in db.query(PlexServer).all():
         if server.capienza is None:
             continue
+        cap = int(server.capienza)
+        plex_total_capacity += cap
         used = db.query(PlexUser).filter(PlexUser.server == server.nome).count()
-        plex_available_slots += max(int(server.capienza) - used, 0)
+        plex_available_slots += max(cap - used, 0)
 
     # Expiring / expired — scan all users
     expiring_7 = 0
@@ -132,17 +136,25 @@ def get_dashboard_stats(
         except Exception:
             pass
 
+    # Messaggio del master diretto (se esiste)
+    master_message: str | None = None
+    if current_user.master:
+        master = db.query(Reseller).filter(Reseller.id == current_user.master).first()
+        if master and master.messaggio:
+            master_message = master.messaggio.strip() or None
+
     return DashboardStats(
         emby_users=emby_count,
         jelly_users=jelly_count,
         plex_users=plex_count,
         plex_available_slots=plex_available_slots,
+        plex_total_capacity=plex_total_capacity,
         total_users=emby_count + jelly_count + plex_count,
         total_resellers=total_resellers,
         my_resellers=my_resellers,
         expiring_7=expiring_7,
         expired=expired,
-        dashboard_message=dashboard_message if current_user.master == 1 and dashboard_message else None,
+        master_message=master_message,
         monthly_recharges_remaining=monthly_recharges_remaining,
         cat_url=cat_url,
     )

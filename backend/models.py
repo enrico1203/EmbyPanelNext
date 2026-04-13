@@ -13,6 +13,7 @@ class Reseller(Base):
     credito = Column(Float, default=0)
     idtelegram = Column(BigInteger, nullable=True)
     ruolo = Column(String(20), nullable=False, default="reseller")
+    messaggio = Column(Text, nullable=True)
 
 
 class Prezzo(Base):

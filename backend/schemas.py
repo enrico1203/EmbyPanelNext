@@ -98,6 +98,10 @@ class ResellerPasswordUpdateRequest(BaseModel):
     password: str
 
 
+class MessaggioUpdateRequest(BaseModel):
+    messaggio: str | None = None
+
+
 class UpdateMeRequest(BaseModel):
     idtelegram: Optional[int] = None
 
