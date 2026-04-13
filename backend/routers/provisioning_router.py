@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends
@@ -17,6 +18,7 @@ router = APIRouter()
 class ProvisioningOptionsResponse(BaseModel):
     credito: float
     prices: dict[str, dict[int, float]]
+    richieste: Optional[str] = None
     free_days_threshold: int = 3
     plex_free_days: int = 3
     plex_gmail_only: bool = True
@@ -43,6 +45,7 @@ class PlexProvisionRequest(BaseModel):
 
 
 class ProvisioningResponse(BaseModel):
+    invito: int
     service: str
     username: str
     server: str
@@ -58,6 +61,7 @@ def get_provisioning_options(
     current_user: Reseller = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    richieste = (os.getenv("RICHIESTE", "") or "").strip().strip('"')
     plex_available_slots = 0
     for server in db.query(PlexServer).all():
         if server.capienza is None:
@@ -68,6 +72,7 @@ def get_provisioning_options(
     return ProvisioningOptionsResponse(
         credito=float(current_user.credito or 0),
         prices=get_monthly_price_map(db),
+        richieste=richieste or None,
         plex_available_slots=plex_available_slots,
     )
 

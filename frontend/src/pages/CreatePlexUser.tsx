@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { LoaderCircle, MailPlus, Send } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
@@ -11,6 +11,7 @@ interface ProvisioningOptions {
 }
 
 interface ProvisioningResult {
+  invito: number;
   message: string;
   server: string;
   expiry_days: number;
@@ -18,6 +19,7 @@ interface ProvisioningResult {
 
 export default function CreatePlexUser() {
   const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [options, setOptions] = useState<ProvisioningOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,8 +44,8 @@ export default function CreatePlexUser() {
     try {
       const response = await api.post("/provisioning/plex", { email });
       setSuccess(response.data);
-      setEmail("");
       await refreshUser();
+      navigate(`/lista/plex/${response.data.invito}`);
     } catch (err: any) {
       setError(err?.response?.data?.detail ?? "Errore durante l'invio dell'invito Plex.");
     } finally {

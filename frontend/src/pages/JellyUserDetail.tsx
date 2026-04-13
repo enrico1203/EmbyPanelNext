@@ -26,6 +26,7 @@ interface JellyUserDetailData {
 interface ProvisioningOptions {
   credito: number;
   prices: Record<string, Record<string, number>>;
+  richieste?: string | null;
   free_days_threshold: number;
 }
 
@@ -324,6 +325,16 @@ export default function JellyUserDetail() {
         <Row label="HTTP" value={u.server_url} />
         <Row label="HTTPS" value={u.server_https ? `${u.server_https}:443` : null} />
         <Row label="Porta HTTPS" value={u.server_https ? "443" : null} />
+        {options?.richieste && (
+          <Row
+            label="Richieste"
+            value={
+              <a href={options.richieste} target="_blank" rel="noreferrer" style={{ color: "#00a4dc", fontWeight: 700, textDecoration: "none" }}>
+                {options.richieste}
+              </a>
+            }
+          />
+        )}
         <Row label="Schermi" value={u.schermi} />
         <Row label="4K" value={u.k4} />
         <Row label="Download" value={u.download} />

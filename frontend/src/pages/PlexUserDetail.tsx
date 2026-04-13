@@ -23,6 +23,7 @@ interface PlexUserDetail {
 interface ProvisioningOptions {
   credito: number;
   prices: Record<string, Record<string, number>>;
+  richieste?: string | null;
 }
 
 type Notice = { type: "success" | "error"; text: string } | null;
@@ -213,6 +214,16 @@ export default function PlexUserDetail() {
         <Row label="Scadenza" value={u.expiry_date} />
         <Row label="Giorni rimanenti" value={<ExpiryBadge days={u.days_left} />} />
         <Row label="URL" value="https://app.plex.tv" />
+        {options?.richieste && (
+          <Row
+            label="Richieste"
+            value={
+              <a href={options.richieste} target="_blank" rel="noreferrer" style={{ color: "#e5a00d", fontWeight: 700, textDecoration: "none" }}>
+                {options.richieste}
+              </a>
+            }
+          />
+        )}
         <Row label="Schermi" value={u.nschermi} />
         <Row label="Invitato da" value={u.fromuser} />
         <div className="detail-row">

@@ -53,6 +53,20 @@ class ResellerDetailResponse(ResellerResponse):
     stats: ResellerStatsResponse
 
 
+class ResellerLinkedItemResponse(BaseModel):
+    platform: str
+    invito: int
+    display_name: str
+    reseller: Optional[str] = None
+    server: Optional[str] = None
+    screens: Optional[int] = None
+    k4: Optional[bool] = None
+    download: Optional[bool] = None
+    days_left: Optional[int] = None
+    expiry_date: Optional[datetime] = None
+    detail_path: str
+
+
 class RicaricaRequest(BaseModel):
     amount: float
 

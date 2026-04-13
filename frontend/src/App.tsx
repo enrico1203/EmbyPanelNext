@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Regole from "./pages/Regole";
+import PublicPrezzi from "./pages/PublicPrezzi";
 import Settings from "./pages/Settings";
 import ManageResellers from "./pages/ManageResellers";
 import MyResellers from "./pages/MyResellers";
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/regole" element={<Regole />} />
+                <Route path="/prezzi" element={<PublicPrezzi />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin/resellers" element={<ManageResellers />} />
                 <Route path="/admin/gestione" element={<Gestione />} />

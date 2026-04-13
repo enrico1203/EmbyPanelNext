@@ -4,9 +4,11 @@ from typing import List
 from database import get_db
 from models import Prezzo
 from schemas import PrezzoEntry, PrezziSaveRequest
-from auth import require_admin
+from auth import get_current_user, require_admin
+from models import Reseller
 
 router = APIRouter()
+public_router = APIRouter()
 
 SERVIZI = [
     ("emby_normale", "Emby Normale"),
@@ -18,6 +20,15 @@ SERVIZI = [
 
 @router.get("/prezzi", response_model=List[PrezzoEntry])
 def get_prezzi(db: Session = Depends(get_db), _=Depends(require_admin)):
+    rows = db.query(Prezzo).order_by(Prezzo.servizio, Prezzo.streaming).all()
+    return rows
+
+
+@public_router.get("/prezzi", response_model=List[PrezzoEntry])
+def get_public_prezzi(
+    db: Session = Depends(get_db),
+    _: Reseller = Depends(get_current_user),
+):
     rows = db.query(Prezzo).order_by(Prezzo.servizio, Prezzo.streaming).all()
     return rows
 

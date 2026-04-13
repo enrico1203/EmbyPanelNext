@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { LoaderCircle, Save, Tv } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
@@ -11,6 +11,7 @@ interface ProvisioningOptions {
 }
 
 interface ProvisioningResult {
+  invito: number;
   message: string;
   server: string;
   cost: number;
@@ -24,6 +25,7 @@ function calcCost(monthlyPrice: number, days: number, freeDaysThreshold: number)
 
 export default function CreateEmbyUser() {
   const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [options, setOptions] = useState<ProvisioningOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -82,14 +84,8 @@ export default function CreateEmbyUser() {
         screens: Number(form.screens),
       });
       setSuccess(response.data);
-      setForm({
-        username: "",
-        password: "",
-        accountType: form.accountType,
-        expiryDays: "30",
-        screens: "1",
-      });
       await refreshUser();
+      navigate(`/lista/emby/${response.data.invito}`);
     } catch (err: any) {
       setError(err?.response?.data?.detail ?? "Errore durante la creazione dell'utente Emby.");
     } finally {

@@ -11,6 +11,7 @@ from schemas import (
     ResellerResponse,
     ResellerDetailResponse,
     ResellerStatsResponse,
+    ResellerLinkedItemResponse,
     MovimentoResponse,
     RicaricaRequest,
     RicaricaResponse,
@@ -119,6 +120,114 @@ def _collect_reseller_stats(db: Session, reseller_username: str) -> ResellerStat
     )
 
 
+def _days_left(start_date: datetime | None, expiry_days: int | None) -> int | None:
+    if start_date is None or expiry_days is None:
+        return None
+    now = datetime.now(timezone.utc)
+    aware_start = _to_aware_datetime(start_date)
+    return int(expiry_days) - (now - aware_start).days
+
+
+def _expiry_date(start_date: datetime | None, expiry_days: int | None) -> datetime | None:
+    if start_date is None or expiry_days is None:
+        return None
+    return _to_aware_datetime(start_date) + timedelta(days=int(expiry_days))
+
+
+def _boolish(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    return value.strip().lower() == "true"
+
+
+def _collect_reseller_items(db: Session, reseller_username: str, kind: str) -> list[ResellerLinkedItemResponse]:
+    kind = (kind or "all").strip().lower()
+    allowed_kinds = {"all", "emby", "jelly", "plex", "active", "expired", "expiring7", "screens", "4k"}
+    if kind not in allowed_kinds:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Filtro non valido")
+
+    items: list[ResellerLinkedItemResponse] = []
+
+    for row in db.query(EmbyUser).filter(EmbyUser.reseller == reseller_username).all():
+        items.append(
+            ResellerLinkedItemResponse(
+                platform="emby",
+                invito=int(row.invito),
+                display_name=row.user or "—",
+                reseller=row.reseller,
+                server=row.server,
+                screens=int(row.schermi) if row.schermi is not None else None,
+                k4=_boolish(row.k4),
+                download=_boolish(row.download),
+                days_left=_days_left(row.date, row.expiry),
+                expiry_date=_expiry_date(row.date, row.expiry),
+                detail_path=f"/lista/emby/{row.invito}",
+            )
+        )
+
+    for row in db.query(JellyUser).filter(JellyUser.reseller == reseller_username).all():
+        items.append(
+            ResellerLinkedItemResponse(
+                platform="jelly",
+                invito=int(row.invito),
+                display_name=row.user or "—",
+                reseller=row.reseller,
+                server=row.server,
+                screens=int(row.schermi) if row.schermi is not None else None,
+                k4=_boolish(row.k4),
+                download=_boolish(row.download),
+                days_left=_days_left(row.date, row.expiry),
+                expiry_date=_expiry_date(row.date, row.expiry),
+                detail_path=f"/lista/jelly/{row.invito}",
+            )
+        )
+
+    for row in db.query(PlexUser).filter(PlexUser.reseller == reseller_username).all():
+        items.append(
+            ResellerLinkedItemResponse(
+                platform="plex",
+                invito=int(row.invito),
+                display_name=row.pmail or "—",
+                reseller=row.reseller,
+                server=row.server,
+                screens=int(row.nschermi) if row.nschermi is not None else None,
+                k4=None,
+                download=None,
+                days_left=_days_left(row.date, row.expiry),
+                expiry_date=_expiry_date(row.date, row.expiry),
+                detail_path=f"/lista/plex/{row.invito}",
+            )
+        )
+
+    if kind == "emby":
+        items = [item for item in items if item.platform == "emby"]
+    elif kind == "jelly":
+        items = [item for item in items if item.platform == "jelly"]
+    elif kind == "plex":
+        items = [item for item in items if item.platform == "plex"]
+    elif kind == "active":
+        items = [item for item in items if item.days_left is not None and item.days_left > 0]
+    elif kind == "expired":
+        items = [item for item in items if item.days_left is not None and item.days_left <= 0]
+    elif kind == "expiring7":
+        items = [item for item in items if item.days_left is not None and 1 <= item.days_left <= 7]
+    elif kind == "4k":
+        items = [item for item in items if item.k4 is True]
+
+    if kind == "screens":
+        items.sort(key=lambda item: (-(item.screens or 0), item.platform, item.display_name.lower()))
+    else:
+        items.sort(
+            key=lambda item: (
+                item.platform,
+                item.display_name.lower(),
+                item.server or "",
+            )
+        )
+
+    return items
+
+
 def _detail_response(db: Session, reseller: Reseller) -> ResellerDetailResponse:
     return ResellerDetailResponse(
         id=reseller.id,
@@ -218,6 +327,24 @@ def get_my_reseller(
     if not reseller:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reseller non trovato")
     return _detail_response(db, reseller)
+
+
+@router.get("/my-resellers/{reseller_id}/items", response_model=List[ResellerLinkedItemResponse])
+def get_my_reseller_items(
+    reseller_id: int,
+    kind: str = "all",
+    current_user: Reseller = Depends(require_master_or_admin),
+    db: Session = Depends(get_db),
+):
+    reseller = (
+        db.query(Reseller)
+        .filter(Reseller.id == reseller_id, Reseller.master == current_user.id)
+        .first()
+    )
+    if not reseller:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reseller non trovato")
+
+    return _collect_reseller_items(db, reseller.username, kind)
 
 
 @router.get("/my-resellers/{reseller_id}/movimenti", response_model=List[MovimentoResponse])

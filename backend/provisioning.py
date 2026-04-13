@@ -23,6 +23,7 @@ USERNAME_REGEX = re.compile(r"^[A-Za-z0-9]+$")
 
 @dataclass
 class ProvisionResult:
+    invito: int
     service: str
     username: str
     server: str
@@ -287,20 +288,20 @@ def create_emby_user(
 
         created_at = datetime.now(timezone.utc)
         remaining = _apply_credit_charge(db, current_user, cost, "crea", username)
-        db.add(
-            EmbyUser(
-                reseller=current_user.username,
-                user=username,
-                date=created_at,
-                expiry=expiry_days,
-                server=server.nome,
-                schermi=screens,
-                k4="false",
-                download="false",
-                password=password,
-                nota=None,
-            )
+        db_user = EmbyUser(
+            reseller=current_user.username,
+            user=username,
+            date=created_at,
+            expiry=expiry_days,
+            server=server.nome,
+            schermi=screens,
+            k4="false",
+            download="false",
+            password=password,
+            nota=None,
         )
+        db.add(db_user)
+        db.flush()
         db.commit()
         db.refresh(current_user)
         log_user_created(
@@ -323,6 +324,7 @@ def create_emby_user(
             server_url=_server_access_url(https_value=server.https, url_value=server.url),
         )
         return ProvisionResult(
+            invito=int(db_user.invito),
             service="emby",
             username=username,
             server=server.nome,
@@ -369,20 +371,20 @@ def create_jelly_user(
 
         created_at = datetime.now(timezone.utc)
         remaining = _apply_credit_charge(db, current_user, cost, "creaj", username)
-        db.add(
-            JellyUser(
-                reseller=current_user.username,
-                user=username,
-                date=created_at,
-                expiry=expiry_days,
-                server=server.nome,
-                schermi=screens,
-                k4="false",
-                download="false",
-                password=password,
-                nota=None,
-            )
+        db_user = JellyUser(
+            reseller=current_user.username,
+            user=username,
+            date=created_at,
+            expiry=expiry_days,
+            server=server.nome,
+            schermi=screens,
+            k4="false",
+            download="false",
+            password=password,
+            nota=None,
         )
+        db.add(db_user)
+        db.flush()
         db.commit()
         db.refresh(current_user)
         log_user_created(
@@ -404,6 +406,7 @@ def create_jelly_user(
             server_url=_server_access_url(https_value=server.https, url_value=server.url),
         )
         return ProvisionResult(
+            invito=int(db_user.invito),
             service="jelly",
             username=username,
             server=server.nome,
@@ -432,18 +435,18 @@ def create_plex_user(
     plexapi.send_invite(server.nome, email, db=db)
     remaining = _apply_credit_charge(db, current_user, DECIMAL_ZERO, "creaplex", email)
     created_at = datetime.now(timezone.utc)
-    db.add(
-        PlexUser(
-            reseller=current_user.username,
-            pmail=email,
-            date=created_at,
-            expiry=3,
-            nschermi=2,
-            server=server.nome,
-            fromuser=current_user.username,
-            nota=None,
-        )
+    db_user = PlexUser(
+        reseller=current_user.username,
+        pmail=email,
+        date=created_at,
+        expiry=3,
+        nschermi=2,
+        server=server.nome,
+        fromuser=current_user.username,
+        nota=None,
     )
+    db.add(db_user)
+    db.flush()
     db.commit()
     db.refresh(current_user)
     log_user_created(
@@ -466,6 +469,7 @@ def create_plex_user(
         server_url=_server_access_url(url_value=server.url),
     )
     return ProvisionResult(
+        invito=int(db_user.invito),
         service="plex",
         username=email,
         server=server.nome,

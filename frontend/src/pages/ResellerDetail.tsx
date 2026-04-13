@@ -37,6 +37,31 @@ interface Movimento {
   saldo: number | null;
 }
 
+interface ResellerLinkedItem {
+  platform: "emby" | "jelly" | "plex";
+  invito: number;
+  display_name: string;
+  reseller: string | null;
+  server: string | null;
+  screens: number | null;
+  k4: boolean | null;
+  download: boolean | null;
+  days_left: number | null;
+  expiry_date: string | null;
+  detail_path: string;
+}
+
+type ItemModalKind =
+  | "all"
+  | "emby"
+  | "jelly"
+  | "plex"
+  | "active"
+  | "expired"
+  | "expiring7"
+  | "screens"
+  | "4k";
+
 function actionBtn(color: string, background: string, border: string) {
   return {
     display: "inline-flex",
@@ -93,6 +118,23 @@ function formatDate(iso: string | null): string {
   return d.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatDays(days: number | null): string {
+  if (days === null) return "—";
+  return days <= 0 ? `Scaduto (${days})` : `${days} giorni`;
+}
+
+function platformLabel(platform: ResellerLinkedItem["platform"]) {
+  if (platform === "emby") return "Emby";
+  if (platform === "jelly") return "Jellyfin";
+  return "Plex";
+}
+
+function platformBadgeClass(platform: ResellerLinkedItem["platform"]) {
+  if (platform === "emby") return "platform-emby";
+  if (platform === "jelly") return "platform-jelly";
+  return "platform-plex";
+}
+
 export default function ResellerDetail() {
   const { user, refreshUser } = useAuth();
   const { id } = useParams<{ id: string }>();
@@ -115,6 +157,11 @@ export default function ResellerDetail() {
   const [movements, setMovements] = useState<Movimento[]>([]);
   const [movementsLoading, setMovementsLoading] = useState(false);
   const [movementsError, setMovementsError] = useState("");
+  const [showItemsModal, setShowItemsModal] = useState(false);
+  const [itemsTitle, setItemsTitle] = useState("");
+  const [items, setItems] = useState<ResellerLinkedItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState("");
 
   const canAccess = user?.ruolo === "admin" || user?.ruolo === "master";
   if (!canAccess) return <Navigate to="/dashboard" replace />;
@@ -178,6 +225,23 @@ export default function ResellerDetail() {
       setMovementsError(err?.response?.data?.detail ?? "Errore durante il caricamento dei movimenti.");
     } finally {
       setMovementsLoading(false);
+    }
+  };
+
+  const openItemsModal = async (kind: ItemModalKind, title: string) => {
+    setItemsTitle(title);
+    setShowItemsModal(true);
+    setItemsLoading(true);
+    setItemsError("");
+    try {
+      const response = await api.get(`/reseller/my-resellers/${id}/items`, {
+        params: { kind },
+      });
+      setItems(response.data);
+    } catch (err: any) {
+      setItemsError(err?.response?.data?.detail ?? "Errore durante il caricamento degli utenti.");
+    } finally {
+      setItemsLoading(false);
     }
   };
 
@@ -307,15 +371,15 @@ export default function ResellerDetail() {
       </div>
 
       <div className="cards-grid" style={{ marginTop: 24 }}>
-        <StatCard icon={<Users size={18} />} label="Utenti totali" value={reseller.stats.total_users} accent="#6c8ef7" />
-        <StatCard icon={<Tv size={18} />} label="Utenti Emby" value={reseller.stats.emby_users} accent="#f5b84b" />
-        <StatCard icon={<Tv size={18} />} label="Utenti Jellyfin" value={reseller.stats.jelly_users} accent="#00a4dc" />
-        <StatCard icon={<Tv size={18} />} label="Utenti Plex" value={reseller.stats.plex_users} accent="#e5a00d" />
-        <StatCard icon={<Users size={18} />} label="Utenti attivi" value={reseller.stats.active_users} accent="#3dd5a5" />
-        <StatCard icon={<AlertTriangle size={18} />} label="Utenti scaduti" value={reseller.stats.expired_users} accent="#ef4444" />
-        <StatCard icon={<Clock3 size={18} />} label="Scadono entro 7 giorni" value={reseller.stats.expiring_7_days} accent="#f97316" />
-        <StatCard icon={<Layers3 size={18} />} label="Schermi totali" value={reseller.stats.total_screens} accent="#a78bfa" />
-        <StatCard icon={<Film size={18} />} label="Utenti con 4K" value={reseller.stats.total_4k_users} accent="#14b8a6" />
+        <StatCard icon={<Users size={18} />} label="Utenti totali" value={reseller.stats.total_users} accent="#6c8ef7" onClick={() => openItemsModal("all", `Tutti gli utenti di ${reseller.username}`)} />
+        <StatCard icon={<Tv size={18} />} label="Utenti Emby" value={reseller.stats.emby_users} accent="#f5b84b" onClick={() => openItemsModal("emby", `Utenti Emby di ${reseller.username}`)} />
+        <StatCard icon={<Tv size={18} />} label="Utenti Jellyfin" value={reseller.stats.jelly_users} accent="#00a4dc" onClick={() => openItemsModal("jelly", `Utenti Jellyfin di ${reseller.username}`)} />
+        <StatCard icon={<Tv size={18} />} label="Utenti Plex" value={reseller.stats.plex_users} accent="#e5a00d" onClick={() => openItemsModal("plex", `Utenti Plex di ${reseller.username}`)} />
+        <StatCard icon={<Users size={18} />} label="Utenti attivi" value={reseller.stats.active_users} accent="#3dd5a5" onClick={() => openItemsModal("active", `Utenti attivi di ${reseller.username}`)} />
+        <StatCard icon={<AlertTriangle size={18} />} label="Utenti scaduti" value={reseller.stats.expired_users} accent="#ef4444" onClick={() => openItemsModal("expired", `Utenti scaduti di ${reseller.username}`)} />
+        <StatCard icon={<Clock3 size={18} />} label="Scadono entro 7 giorni" value={reseller.stats.expiring_7_days} accent="#f97316" onClick={() => openItemsModal("expiring7", `Utenti in scadenza di ${reseller.username}`)} />
+        <StatCard icon={<Layers3 size={18} />} label="Schermi totali" value={reseller.stats.total_screens} accent="#a78bfa" onClick={() => openItemsModal("screens", `Utenti ordinati per schermi di ${reseller.username}`)} />
+        <StatCard icon={<Film size={18} />} label="Utenti con 4K" value={reseller.stats.total_4k_users} accent="#14b8a6" onClick={() => openItemsModal("4k", `Utenti con 4K di ${reseller.username}`)} />
         <StatCard icon={<History size={18} />} label="Movimenti registrati" value={reseller.stats.movements_count} accent="#94a3b8" onClick={openMovementsModal} />
       </div>
 
@@ -439,6 +503,83 @@ export default function ResellerDetail() {
 
             <div className="modal-footer">
               <button type="button" className="btn btn-primary" onClick={() => setShowMovementsModal(false)}>
+                Chiudi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showItemsModal && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowItemsModal(false)}>
+          <div className="modal-card" style={{ maxWidth: 1080 }}>
+            <div className="modal-header">
+              <h3>{itemsTitle}</h3>
+              <button className="btn-ic" onClick={() => setShowItemsModal(false)}>
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {itemsLoading ? (
+                <div className="loading-wrap"><div className="spinner" /></div>
+              ) : itemsError ? (
+                <div className="login-error">{itemsError}</div>
+              ) : items.length === 0 ? (
+                <div className="wip-wrap" style={{ minHeight: 180 }}>
+                  <p>Nessun elemento trovato per questo filtro.</p>
+                </div>
+              ) : (
+                <div className="table-card" style={{ margin: 0 }}>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Piattaforma</th>
+                          <th>Utente</th>
+                          <th>Server</th>
+                          <th>Schermi</th>
+                          <th>4K</th>
+                          <th>Download</th>
+                          <th>Scadenza</th>
+                          <th>Stato</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item) => (
+                          <tr key={`${item.platform}-${item.invito}`}>
+                            <td>
+                              <span className={`pg-badge ${platformBadgeClass(item.platform)}`}>{platformLabel(item.platform)}</span>
+                            </td>
+                            <td style={{ fontWeight: 700 }}>{item.display_name}</td>
+                            <td style={{ color: "var(--txt-muted)", fontSize: ".85rem" }}>{item.server ?? "—"}</td>
+                            <td>{item.screens ?? "—"}</td>
+                            <td>{item.k4 == null ? "—" : item.k4 ? "Sì" : "No"}</td>
+                            <td>{item.download == null ? "—" : item.download ? "Sì" : "No"}</td>
+                            <td style={{ color: "var(--txt-muted)", fontSize: ".82rem", whiteSpace: "nowrap" }}>{formatDate(item.expiry_date)}</td>
+                            <td style={{ whiteSpace: "nowrap" }}>{formatDays(item.days_left)}</td>
+                            <td style={{ textAlign: "right" }}>
+                              <button
+                                type="button"
+                                className="btn btn-ghost"
+                                onClick={() => navigate(item.detail_path)}
+                                style={{ minWidth: 0 }}
+                              >
+                                Apri
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-primary" onClick={() => setShowItemsModal(false)}>
                 Chiudi
               </button>
             </div>

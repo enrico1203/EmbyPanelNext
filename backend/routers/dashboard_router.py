@@ -2,10 +2,11 @@ import os
 import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 from typing import Optional
 from database import get_db
-from models import EmbyUser, JellyUser, PlexServer, PlexUser, Reseller
+from models import EmbyUser, JellyUser, Movimento, PlexServer, PlexUser, Reseller
 from auth import get_current_user
 
 router = APIRouter()
@@ -23,6 +24,8 @@ class DashboardStats(BaseModel):
     my_resellers: int
     expiring_7: int
     expired: int
+    dashboard_message: Optional[str] = None
+    monthly_recharges_remaining: Optional[int] = None
     cat_url: Optional[str] = None
 
 
@@ -32,6 +35,8 @@ def get_dashboard_stats(
     db: Session = Depends(get_db),
 ):
     is_admin = current_user.ruolo == "admin"
+    dashboard_message = (os.getenv("MESSAGGIO", "") or "").strip()
+    monthly_recharges_limit_raw = (os.getenv("RICARICHEMENSILI", "") or "").strip()
 
     def emby_q():
         q = db.query(EmbyUser)
@@ -53,6 +58,11 @@ def get_dashboard_stats(
 
     from datetime import datetime, timezone, timedelta
     now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if month_start.month == 12:
+        next_month_start = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        next_month_start = month_start.replace(month=month_start.month + 1)
 
     def days_left(u_date, u_expiry):
         if u_date is None or u_expiry is None:
@@ -91,6 +101,22 @@ def get_dashboard_stats(
         total_resellers = db.query(Reseller).filter(Reseller.ruolo != "admin").count()
         my_resellers = db.query(Reseller).filter(Reseller.master == current_user.id).count()
 
+    monthly_recharges_remaining = None
+    if monthly_recharges_limit_raw:
+        try:
+            monthly_recharges_limit = max(int(monthly_recharges_limit_raw), 0)
+            monthly_recharges_used = (
+                db.query(func.count(Movimento.id))
+                .filter(Movimento.user == current_user.username)
+                .filter(func.lower(Movimento.type) == "ricarica")
+                .filter(Movimento.date >= month_start, Movimento.date < next_month_start)
+                .scalar()
+                or 0
+            )
+            monthly_recharges_remaining = max(monthly_recharges_limit - int(monthly_recharges_used), 0)
+        except ValueError:
+            monthly_recharges_remaining = None
+
     # Cat API
     cat_url = None
     if CAT_API_KEY:
@@ -116,5 +142,7 @@ def get_dashboard_stats(
         my_resellers=my_resellers,
         expiring_7=expiring_7,
         expired=expired,
+        dashboard_message=dashboard_message if current_user.master == 1 and dashboard_message else None,
+        monthly_recharges_remaining=monthly_recharges_remaining,
         cat_url=cat_url,
     )

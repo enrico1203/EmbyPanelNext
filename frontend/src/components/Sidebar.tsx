@@ -62,6 +62,16 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
         </NavLink>
 
         <NavLink
+          to="/prezzi"
+          className={linkClass("/prezzi")}
+          onClick={onCloseMobile}
+          data-tip="Prezzi"
+        >
+          <span className="sb-icon"><CircleDollarSign size={17} /></span>
+          <span className="sb-label">Prezzi</span>
+        </NavLink>
+
+        <NavLink
           to="/movimenti"
           className={linkClass("/movimenti")}
           onClick={onCloseMobile}
@@ -160,10 +170,10 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
               to="/admin/prezzi"
               className={linkClass("/admin/prezzi")}
               onClick={onCloseMobile}
-              data-tip="Prezzi"
+              data-tip="Gestione Prezzi"
             >
               <span className="sb-icon"><CircleDollarSign size={17} /></span>
-              <span className="sb-label">Prezzi</span>
+              <span className="sb-label">Gestione Prezzi</span>
             </NavLink>
             <NavLink
               to="/admin/gestione"

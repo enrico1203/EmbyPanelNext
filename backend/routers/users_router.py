@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -89,6 +90,7 @@ class EmbyUserDetail(EmbyUserOut):
     date_fmt: Optional[str] = None
     server_url: Optional[str] = None
     server_https: Optional[str] = None
+    devices: list[str] = []
 
 class JellyUserDetail(JellyUserOut):
     password: Optional[str] = None
@@ -240,6 +242,22 @@ def _jelly_detail(u: JellyUser, db: Session) -> JellyUserDetail:
 
 def _emby_detail(u: EmbyUser, db: Session) -> EmbyUserDetail:
     srv = db.query(EmbyServer).filter(EmbyServer.nome == u.server).first() if u.server else None
+    devices: list[str] = []
+    if u.user:
+        rows = db.execute(
+            text(
+                """
+                SELECT DISTINCT device
+                FROM public.devices
+                WHERE lower("user") = lower(:username)
+                  AND device IS NOT NULL
+                  AND btrim(device) <> ''
+                ORDER BY device ASC
+                """
+            ),
+            {"username": u.user},
+        )
+        devices = [str(row[0]) for row in rows]
     return EmbyUserDetail(
         invito=u.invito, reseller=u.reseller, user=u.user,
         date=u.date, expiry=u.expiry, days_left=_days_left(u.date, u.expiry),
@@ -249,6 +267,7 @@ def _emby_detail(u: EmbyUser, db: Session) -> EmbyUserDetail:
         server_url=srv.url if srv else None,
         server_https=srv.https if srv else None,
         server_type=srv.tipo if srv else None,
+        devices=devices,
     )
 
 

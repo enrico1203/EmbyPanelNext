@@ -22,11 +22,13 @@ interface EmbyUserDetailData {
   password: string | null;
   nota: string | null;
   server_type: string | null;
+  devices: string[];
 }
 
 interface ProvisioningOptions {
   credito: number;
   prices: Record<string, Record<string, number>>;
+  richieste?: string | null;
   free_days_threshold: number;
 }
 
@@ -327,6 +329,16 @@ export default function EmbyUserDetail() {
         <Row label="HTTP" value={u.server_url} />
         <Row label="HTTPS" value={u.server_https ? `${u.server_https}:443` : null} />
         <Row label="Porta HTTPS" value={u.server_https ? "443" : null} />
+        {options?.richieste && (
+          <Row
+            label="Richieste"
+            value={
+              <a href={options.richieste} target="_blank" rel="noreferrer" style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
+                {options.richieste}
+              </a>
+            }
+          />
+        )}
         <Row label="Schermi" value={u.schermi} />
         <Row label="4K" value={u.k4} />
         <Row label="Download" value={u.download} />
@@ -334,6 +346,36 @@ export default function EmbyUserDetail() {
           <span className="detail-row-label">Note</span>
           <span className="detail-row-value">{u.nota || "—"}</span>
         </div>
+      </div>
+
+      <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 18, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "14px 18px", background: "var(--bg-3)", borderBottom: "1px solid var(--border)", fontSize: ".78rem", fontWeight: 700, color: "var(--txt-soft)", textTransform: "uppercase", letterSpacing: ".1em" }}>
+          Dispositivi usati
+        </div>
+        {u.devices.length === 0 ? (
+          <div style={{ padding: "18px", color: "var(--txt-soft)", fontSize: ".92rem" }}>
+            Nessun dispositivo trovato per questo utente.
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: 70 }}>#</th>
+                  <th>Dispositivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {u.devices.map((device, index) => (
+                  <tr key={`${device}-${index}`}>
+                    <td style={{ color: "var(--txt-muted)", fontSize: ".82rem" }}>{index + 1}</td>
+                    <td>{device}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {modal && (
