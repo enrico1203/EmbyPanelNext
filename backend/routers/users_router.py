@@ -179,8 +179,22 @@ def _plex_out(u: PlexUser) -> PlexUserOut:
     )
 
 def _check_access(current_user: Reseller, reseller_field: Optional[str]):
+    """Accesso in scrittura: solo admin o il reseller proprietario."""
     if current_user.ruolo != "admin" and reseller_field != current_user.username:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso negato")
+
+
+def _check_read_access(current_user: Reseller, reseller_field: Optional[str], db: Session) -> None:
+    """Accesso in lettura: admin, reseller proprietario, o master diretto del reseller."""
+    if current_user.ruolo == "admin":
+        return
+    if reseller_field == current_user.username:
+        return
+    # Controlla se current_user è il master diretto del reseller proprietario
+    owner = db.query(Reseller).filter(Reseller.username == reseller_field).first()
+    if owner and owner.master == current_user.id:
+        return
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accesso negato")
 
 
 def _aware_date(value: Optional[datetime]) -> Optional[datetime]:
@@ -314,19 +328,19 @@ def list_plex_users(current_user: Reseller = Depends(get_current_user), db: Sess
 @router.get("/users/emby/{invito}", response_model=EmbyUserDetail)
 def get_emby_user(invito: int, current_user: Reseller = Depends(get_current_user), db: Session = Depends(get_db)):
     u = _get_emby_user_or_404(invito, db)
-    _check_access(current_user, u.reseller)
+    _check_read_access(current_user, u.reseller, db)
     return _emby_detail(u, db)
 
 @router.get("/users/jelly/{invito}", response_model=JellyUserDetail)
 def get_jelly_user(invito: int, current_user: Reseller = Depends(get_current_user), db: Session = Depends(get_db)):
     u = _get_jelly_user_or_404(invito, db)
-    _check_access(current_user, u.reseller)
+    _check_read_access(current_user, u.reseller, db)
     return _jelly_detail(u, db)
 
 @router.get("/users/plex/{invito}", response_model=PlexUserDetail)
 def get_plex_user(invito: int, current_user: Reseller = Depends(get_current_user), db: Session = Depends(get_db)):
     u = _get_plex_user_or_404(invito, db)
-    _check_access(current_user, u.reseller)
+    _check_read_access(current_user, u.reseller, db)
     return _plex_detail(u, db)
 
 

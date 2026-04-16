@@ -27,15 +27,11 @@ function renderMarkdown(raw: string): React.ReactNode[] {
   };
 
   const renderInline = (text: string): React.ReactNode[] => {
-    // **bold** e *italic*
-    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g);
     return parts.map((part, i) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={i}>{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith("*") && part.endsWith("*")) {
-        return <em key={i}>{part.slice(1, -1)}</em>;
-      }
+      if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith("~~") && part.endsWith("~~")) return <s key={i}>{part.slice(2, -2)}</s>;
+      if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
       return <span key={i}>{part}</span>;
     });
   };
@@ -130,7 +126,7 @@ export default function ImpostaMessaggio() {
           border: "1px solid rgba(108,142,247,.18)",
         }}>
           Il messaggio che imposti qui viene mostrato nella dashboard di tutti i reseller che hanno te come master.
-          Supporta <strong>**grassetto**</strong>, <em>*corsivo*</em>, elenchi con <code>-</code> e <strong>emoji</strong> 🎉
+          Supporta <strong>**grassetto**</strong>, <em>*corsivo*</em>, <s>~~barrato~~</s>, elenchi con <code>-</code> e <strong>emoji</strong> 🎉
         </p>
 
         {loading ? (

@@ -34,6 +34,17 @@ services:
       - nextpanel
     restart: unless-stopped
 
+  telegrampooling:
+    container_name: telegrampooling
+    build:
+      context: ./backend/telegrampooling
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    networks:
+      - nextpanel
+    restart: unless-stopped
+
   nextfrontend:
     container_name: nextfrontend
     build:

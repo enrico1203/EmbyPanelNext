@@ -70,6 +70,8 @@ export default function PlexUserDetail() {
   const isAdmin = me?.ruolo === "admin";
 
   const [u, setU] = useState<PlexUserDetail | null>(null);
+  const isOwner = !!u && me?.username === u.reseller;
+  const canEdit = isAdmin || isOwner;
   const [options, setOptions] = useState<ProvisioningOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +136,8 @@ export default function PlexUserDetail() {
   const monthlyPrice = Number(options?.prices?.plex?.[String(u?.nschermi ?? 1)] ?? 0);
   const renewCost = Math.round((monthlyPrice * ((Number(renewDays) || 0) / 30.416)) * 100) / 100;
   const remainingEstimate = Math.round(((Number(me?.credito ?? 0) - renewCost) * 100)) / 100;
+  const pendingDays = Math.max(0, u?.days_left ?? 0);
+  const pendingCost = Math.round((monthlyPrice * (pendingDays / 30.416)) * 100) / 100;
 
   const handleRenew = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -182,23 +186,23 @@ export default function PlexUserDetail() {
       {notice?.type === "error" && <div className="login-error">{notice.text}</div>}
 
       <div className="detail-actions" style={{ marginBottom: 22 }}>
-        <button
-          style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")}
-          onClick={() => {
-            setNotice(null);
-            setRenewDays("30");
-            setShowRenew(true);
-          }}
-          disabled={submitting}
-        >
-          <RotateCcw size={14} /> Rinnova
-        </button>
-        <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => setConfirmDelete(true)} disabled={submitting}>
-          <Trash2 size={14} /> Cancella
-        </button>
-        <button style={actionBtn("var(--txt-soft)", "var(--bg-3)", "var(--border-2)")} title="Funzionalità in arrivo">
-          <StickyNote size={14} /> Nota
-        </button>
+        {canEdit && (
+          <>
+            <button
+              style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")}
+              onClick={() => { setNotice(null); setRenewDays("30"); setShowRenew(true); }}
+              disabled={submitting}
+            >
+              <RotateCcw size={14} /> Rinnova
+            </button>
+            <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => setConfirmDelete(true)} disabled={submitting}>
+              <Trash2 size={14} /> Cancella
+            </button>
+            <button style={actionBtn("var(--txt-soft)", "var(--bg-3)", "var(--border-2)")} title="Funzionalità in arrivo">
+              <StickyNote size={14} /> Nota
+            </button>
+          </>
+        )}
         <button onClick={handleCopy} style={actionBtn(copied ? "var(--teal)" : "var(--txt-soft)", "var(--bg-3)", "var(--border-2)")}>
           {copied ? <><Check size={14} /> Copiato!</> : <><Copy size={14} /> Copia info</>}
         </button>
@@ -209,7 +213,7 @@ export default function PlexUserDetail() {
           Dettagli utente Plex
         </div>
         <Row label="Email Plex" value={u.pmail} accent />
-        {isAdmin && <Row label="Reseller" value={u.reseller} />}
+        {(isAdmin || !isOwner) && <Row label="Reseller" value={u.reseller} />}
         <Row label="Attivazione" value={u.date_fmt} />
         <Row label="Scadenza" value={u.expiry_date} />
         <Row label="Giorni rimanenti" value={<ExpiryBadge days={u.days_left} />} />
@@ -231,6 +235,17 @@ export default function PlexUserDetail() {
           <span className="detail-row-value">{u.nota || "—"}</span>
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="detail-summary-card" style={{ marginTop: 16 }}>
+          <div className="create-summary-label">Costo pendente (rimborso)</div>
+          <div className="create-summary-value">{pendingCost.toFixed(2)} crediti</div>
+          <div className="create-summary-meta">Giorni residui: {pendingDays}</div>
+          <div className="create-summary-meta">Schermi attuali: {u.nschermi ?? 1}</div>
+          <div className="create-summary-meta">Piano: Plex</div>
+          <div className="create-summary-meta">Prezzo mensile base: {monthlyPrice.toFixed(2)} crediti</div>
+        </div>
+      )}
 
       {confirmDelete && (
         <div className="modal-overlay" onClick={(event) => event.target === event.currentTarget && !submitting && setConfirmDelete(false)}>

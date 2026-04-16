@@ -89,6 +89,8 @@ export default function JellyUserDetail() {
   const isAdmin = me?.ruolo === "admin";
 
   const [u, setU] = useState<JellyUserDetailData | null>(null);
+  const isOwner = !!u && me?.username === u.reseller;
+  const canEdit = isAdmin || isOwner;
   const [options, setOptions] = useState<ProvisioningOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +183,9 @@ export default function JellyUserDetail() {
   const selectedScreens = Number(renewScreens) || 0;
   const currentScreens = Number(u?.schermi ?? 1);
   const renewRuleBlocked = !!u && (u.days_left ?? 0) > 7 && selectedScreens < currentScreens;
+  const pendingMonthlyPrice = Number(options?.prices?.jellyfin?.[String(u?.schermi ?? 1)] ?? 0);
+  const pendingDays = Math.max(0, u?.days_left ?? 0);
+  const pendingCost = calcCost(pendingMonthlyPrice, pendingDays);
 
   const runAction = async (
     actionKey: string,
@@ -288,24 +293,28 @@ export default function JellyUserDetail() {
       {notice?.type === "error" && <div className="login-error">{notice.text}</div>}
 
       <div className="detail-actions" style={{ marginBottom: 22 }}>
-        <button style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")} onClick={() => openModal("renew")} disabled={!!submitting}>
-          <RotateCcw size={14} /> Rinnova
-        </button>
-        <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => openModal("delete")} disabled={!!submitting}>
-          <Trash2 size={14} /> Cancella
-        </button>
-        <button style={actionBtn("var(--gold)", "rgba(245,184,75,.18)", "rgba(245,184,75,.35)")} onClick={() => handleToggle4k(false)} disabled={!!submitting || (u.k4 ?? "").toLowerCase() !== "true"}>
-          <Film size={14} /> Togli 4K
-        </button>
-        <button style={actionBtn("var(--teal)", "rgba(61,213,165,.16)", "rgba(61,213,165,.32)")} onClick={() => handleToggle4k(true)} disabled={!!submitting || (u.k4 ?? "").toLowerCase() === "true"}>
-          <Film size={14} /> Metti 4K
-        </button>
-        <button style={actionBtn("#86efac", "rgba(34,197,94,.16)", "rgba(34,197,94,.32)")} onClick={() => openModal("password")} disabled={!!submitting}>
-          <Key size={14} /> Cambia Password
-        </button>
-        <button style={actionBtn("var(--txt-soft)", "var(--bg-3)", "var(--border-2)")} onClick={() => openModal("note")} disabled={!!submitting}>
-          <StickyNote size={14} /> Nota
-        </button>
+        {canEdit && (
+          <>
+            <button style={actionBtn("#a5b8f8", "rgba(108,142,247,.18)", "rgba(108,142,247,.35)")} onClick={() => openModal("renew")} disabled={!!submitting}>
+              <RotateCcw size={14} /> Rinnova
+            </button>
+            <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => openModal("delete")} disabled={!!submitting}>
+              <Trash2 size={14} /> Cancella
+            </button>
+            <button style={actionBtn("var(--gold)", "rgba(245,184,75,.18)", "rgba(245,184,75,.35)")} onClick={() => handleToggle4k(false)} disabled={!!submitting || (u.k4 ?? "").toLowerCase() !== "true"}>
+              <Film size={14} /> Togli 4K
+            </button>
+            <button style={actionBtn("var(--teal)", "rgba(61,213,165,.16)", "rgba(61,213,165,.32)")} onClick={() => handleToggle4k(true)} disabled={!!submitting || (u.k4 ?? "").toLowerCase() === "true"}>
+              <Film size={14} /> Metti 4K
+            </button>
+            <button style={actionBtn("#86efac", "rgba(34,197,94,.16)", "rgba(34,197,94,.32)")} onClick={() => openModal("password")} disabled={!!submitting}>
+              <Key size={14} /> Cambia Password
+            </button>
+            <button style={actionBtn("var(--txt-soft)", "var(--bg-3)", "var(--border-2)")} onClick={() => openModal("note")} disabled={!!submitting}>
+              <StickyNote size={14} /> Nota
+            </button>
+          </>
+        )}
         <button onClick={handleCopy} style={actionBtn(copied ? "var(--teal)" : "var(--txt-soft)", "var(--bg-3)", "var(--border-2)")}>
           {copied ? <><Check size={14} /> Copiato!</> : <><Copy size={14} /> Copia info</>}
         </button>
@@ -317,7 +326,7 @@ export default function JellyUserDetail() {
         </div>
         <Row label="Username" value={u.user} accent />
         <Row label="Password" value={u.password} />
-        {isAdmin && <Row label="Reseller" value={u.reseller} />}
+        {(isAdmin || !isOwner) && <Row label="Reseller" value={u.reseller} />}
         <Row label="Attivazione" value={u.date_fmt} />
         <Row label="Scadenza" value={u.expiry_date} />
         <Row label="Giorni rimanenti" value={<ExpiryBadge days={u.days_left} />} />
@@ -343,6 +352,17 @@ export default function JellyUserDetail() {
           <span className="detail-row-value">{u.nota || "—"}</span>
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="detail-summary-card" style={{ marginTop: 16 }}>
+          <div className="create-summary-label">Costo pendente (rimborso)</div>
+          <div className="create-summary-value">{pendingCost.toFixed(2)} crediti</div>
+          <div className="create-summary-meta">Giorni residui: {pendingDays}</div>
+          <div className="create-summary-meta">Schermi attuali: {u.schermi ?? 1}</div>
+          <div className="create-summary-meta">Piano: Jellyfin</div>
+          <div className="create-summary-meta">Prezzo mensile base: {pendingMonthlyPrice.toFixed(2)} crediti</div>
+        </div>
+      )}
 
       {modal && (
         <div className="modal-overlay" onClick={(event) => event.target === event.currentTarget && closeModal()}>

@@ -23,8 +23,9 @@ function renderMarkdown(raw: string): React.ReactNode[] {
   };
 
   const renderInline = (text: string): React.ReactNode[] =>
-    text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+    text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g).map((part, i) => {
       if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith("~~") && part.endsWith("~~")) return <s key={i}>{part.slice(2, -2)}</s>;
       if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
       return <span key={i}>{part}</span>;
     });
