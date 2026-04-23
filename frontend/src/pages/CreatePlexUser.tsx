@@ -8,6 +8,7 @@ interface ProvisioningOptions {
   plex_free_days: number;
   plex_gmail_only: boolean;
   plex_available_slots: number;
+  plex_creation_cost: number;
 }
 
 interface ProvisioningResult {
@@ -15,6 +16,8 @@ interface ProvisioningResult {
   message: string;
   server: string;
   expiry_days: number;
+  cost: number;
+  remaining_credit: number;
 }
 
 export default function CreatePlexUser() {
@@ -62,7 +65,7 @@ export default function CreatePlexUser() {
             <span>Crea Utente Plex</span>
           </div>
           <p className="manage-subtitle">
-            Invito solo verso email Gmail. L'account parte gratis con {options?.plex_free_days ?? 3} giorni.
+            Invito solo verso email Gmail. Costo invio invito: {Number(options?.plex_creation_cost ?? 0).toFixed(2)} crediti. L'account parte con {options?.plex_free_days ?? 3} giorni.
           </p>
         </div>
       </div>
@@ -70,7 +73,7 @@ export default function CreatePlexUser() {
       {error && <div className="login-error">{error}</div>}
       {success && (
         <div className="save-success">
-          {success.message}. Server: {success.server}. Scadenza iniziale: {success.expiry_days} giorni. Costo: 0 crediti.
+          {success.message}. Server: {success.server}. Scadenza iniziale: {success.expiry_days} giorni. Costo: {Number(success.cost ?? 0).toFixed(2)} crediti. Credito residuo: {Number(success.remaining_credit ?? 0).toFixed(2)} crediti.
         </div>
       )}
 
@@ -118,11 +121,23 @@ export default function CreatePlexUser() {
           </section>
 
           <aside className="create-summary">
-            <div className="create-summary-label">Riepilogo</div>
-            <div className="create-summary-value">0.00 crediti</div>
+            <div className="create-summary-label">Costo invio invito Plex</div>
+            <div className="create-summary-value">{Number(options?.plex_creation_cost ?? 0).toFixed(2)} crediti</div>
+            <div className="create-summary-meta">Credito attuale: {Number(user.credito ?? 0).toFixed(2)} crediti</div>
+            <div className="create-summary-meta">
+              Credito residuo stimato:{" "}
+              {(user.ruolo === "admin"
+                ? Number(user.credito ?? 0)
+                : Math.round((Number(user.credito ?? 0) - Number(options?.plex_creation_cost ?? 0)) * 100) / 100
+              ).toFixed(2)}{" "}
+              crediti
+            </div>
             <div className="create-summary-meta">Scadenza iniziale: {options?.plex_free_days ?? 3} giorni</div>
             <div className="create-summary-meta">Solo Gmail: {options?.plex_gmail_only ? "si" : "no"}</div>
             <div className="create-summary-meta">Posti disponibili Plex: {options?.plex_available_slots ?? 0}</div>
+            <div className="create-note" style={{ marginTop: "14px" }}>
+              Il costo invio invito viene scalato dal credito al momento dell'invio. Se il credito non basta, l'invito non parte.
+            </div>
           </aside>
         </div>
       )}

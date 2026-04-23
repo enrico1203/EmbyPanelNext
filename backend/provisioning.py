@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -19,6 +20,19 @@ DECIMAL_ZERO = Decimal("0.00")
 FREE_DAYS_THRESHOLD = 3
 EMAIL_REGEX = re.compile(r"^[^\s@]+@gmail\.com$", re.IGNORECASE)
 USERNAME_REGEX = re.compile(r"^[A-Za-z0-9]+$")
+
+
+def plex_creation_cost() -> Decimal:
+    raw = (os.getenv("COSTOCREAZIONEPLEX") or "").strip().strip('"').replace(",", ".")
+    if not raw:
+        return DECIMAL_ZERO
+    try:
+        value = Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return DECIMAL_ZERO
+    if value < 0:
+        return DECIMAL_ZERO
+    return quantize_amount(value)
 
 
 @dataclass
@@ -431,9 +445,12 @@ def create_plex_user(
     if _email_exists(db, email):
         _raise("L'email e gia registrata")
 
+    cost = plex_creation_cost()
+    ensure_credit(current_user, cost)
+
     server = choose_plex_server(db)
     plexapi.send_invite(server.nome, email, db=db)
-    remaining = _apply_credit_charge(db, current_user, DECIMAL_ZERO, "creaplex", email)
+    remaining = _apply_credit_charge(db, current_user, cost, "creaplex", email)
     created_at = datetime.now(timezone.utc)
     db_user = PlexUser(
         reseller=current_user.username,
@@ -456,7 +473,7 @@ def create_plex_user(
         server=server.nome,
         days=3,
         screens=2,
-        cost=0,
+        cost=float(cost),
         remaining_credit=float(remaining),
         extra="Tipo: invito Gmail",
     )
@@ -473,7 +490,7 @@ def create_plex_user(
         service="plex",
         username=email,
         server=server.nome,
-        cost=0.0,
+        cost=float(cost),
         remaining_credit=float(remaining),
         expiry_days=3,
         screens=2,

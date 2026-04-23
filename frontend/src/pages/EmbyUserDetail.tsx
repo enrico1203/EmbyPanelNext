@@ -433,7 +433,7 @@ export default function EmbyUserDetail() {
                   </div>
 
                   <div className="create-note">
-                    Come su Jellyfin: se l'utente scade tra più di 7 giorni, gli schermi possono restare uguali o aumentare ma non diminuire.
+                    Se l'utente scade tra più di 7 giorni, gli schermi possono restare uguali o aumentare ma non diminuire.
                   </div>
                   {renewRuleBlocked && (
                     <div className="login-error" style={{ margin: 0 }}>

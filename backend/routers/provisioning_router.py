@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from auth import get_current_user
 from database import get_db
 from models import PlexServer, PlexUser, Reseller
-from provisioning import create_emby_user, create_jelly_user, create_plex_user, get_monthly_price_map
+from provisioning import create_emby_user, create_jelly_user, create_plex_user, get_monthly_price_map, plex_creation_cost
 
 router = APIRouter()
 
@@ -23,6 +23,7 @@ class ProvisioningOptionsResponse(BaseModel):
     plex_free_days: int = 3
     plex_gmail_only: bool = True
     plex_available_slots: int = 0
+    plex_creation_cost: float = 0.0
 
 
 class EmbyProvisionRequest(BaseModel):
@@ -74,6 +75,7 @@ def get_provisioning_options(
         prices=get_monthly_price_map(db),
         richieste=richieste or None,
         plex_available_slots=plex_available_slots,
+        plex_creation_cost=float(plex_creation_cost()),
     )
 
 
