@@ -19,6 +19,7 @@ import Scheduler from "./pages/Scheduler";
 import TestApi from "./pages/TestApi";
 import Inconsistenze from "./pages/Inconsistenze";
 import Funzioni from "./pages/Funzioni";
+import DispositiviUtenti from "./pages/DispositiviUtenti";
 import ListaEmby from "./pages/ListaEmby";
 import ListaJelly from "./pages/ListaJelly";
 import ListaPlex from "./pages/ListaPlex";
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/admin/testapi" element={<TestApi />} />
                 <Route path="/admin/inconsistenze" element={<Inconsistenze />} />
                 <Route path="/admin/funzioni" element={<Funzioni />} />
+                <Route path="/admin/dispositivi-utenti" element={<DispositiviUtenti />} />
                 <Route path="/crea/emby" element={<CreateEmbyUser />} />
                 <Route path="/crea/jellyfin" element={<CreateJellyUser />} />
                 <Route path="/crea/plex" element={<CreatePlexUser />} />

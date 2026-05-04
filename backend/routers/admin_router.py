@@ -721,3 +721,42 @@ def delete_emby_user_row(
     _sync_invito_sequence(db, "euser", "public.euser_invito_seq")
     db.commit()
     return {"message": "Utente Emby rimosso"}
+
+
+@router.get("/devices-stats")
+def admin_devices_stats(
+    current_user: Reseller = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                e.invito,
+                e."user" AS username,
+                e.server,
+                srv.tipo AS server_tipo,
+                COUNT(DISTINCT d.device) AS device_count
+            FROM public.euser e
+            JOIN public.devices d
+              ON LOWER(d."user") = LOWER(e."user")
+             AND d.device IS NOT NULL
+             AND btrim(d.device) <> ''
+            LEFT JOIN public.emby srv ON srv.nome = e.server
+            WHERE e."user" IS NOT NULL
+            GROUP BY e.invito, e."user", e.server, srv.tipo
+            HAVING COUNT(DISTINCT d.device) > 0
+            ORDER BY device_count DESC, LOWER(e."user") ASC
+            """
+        )
+    ).fetchall()
+    return [
+        {
+            "invito": int(row[0]),
+            "username": row[1],
+            "server": row[2],
+            "server_tipo": row[3],
+            "device_count": int(row[4]),
+        }
+        for row in rows
+    ]

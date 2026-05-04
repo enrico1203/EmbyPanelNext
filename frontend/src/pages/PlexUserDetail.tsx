@@ -101,13 +101,11 @@ export default function PlexUserDetail() {
       "Dettagli account Plex:",
       "",
       `Email: ${u.pmail ?? "—"}`,
-      `Attivazione: ${u.date_fmt ?? "—"}`,
+      `URL: https://app.plex.tv`,
+      "",
       `Scadenza: ${u.expiry_date ?? "—"}`,
       `Giorni rimanenti: ${formatDaysStatus(u.days_left)}`,
-      `Server: ${u.server ?? "—"}`,
-      `URL: https://app.plex.tv`,
-      `Schermi: ${u.nschermi ?? "—"}`,
-      `Note: ${u.nota ?? "—"}`,
+      ...(options?.richieste ? ["", `Richieste: ${options.richieste}`] : []),
     ];
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);

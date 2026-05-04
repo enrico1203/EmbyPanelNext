@@ -19,6 +19,7 @@ services:
 
   nextscheduler:
     container_name: nextscheduler
+    init: true
     build:
       context: ./backend
       dockerfile: Dockerfile.scheduler

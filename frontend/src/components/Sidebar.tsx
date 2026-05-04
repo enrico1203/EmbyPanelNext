@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2, Tv, MailPlus, BookOpenText, TriangleAlert, Wrench, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Shield, Store, CircleDollarSign, ReceiptText, SlidersHorizontal, CalendarClock, FlaskConical, Tv2, Tv, MailPlus, BookOpenText, TriangleAlert, Wrench, MessageSquare, MonitorSmartphone } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
@@ -237,6 +237,15 @@ export default function Sidebar({ collapsed, mobileOpen, onCloseMobile }: Sideba
             >
               <span className="sb-icon"><Wrench size={17} /></span>
               <span className="sb-label">Funzioni</span>
+            </NavLink>
+            <NavLink
+              to="/admin/dispositivi-utenti"
+              className={linkClass("/admin/dispositivi-utenti")}
+              onClick={onCloseMobile}
+              data-tip="Ver. disp. ut."
+            >
+              <span className="sb-icon"><MonitorSmartphone size={17} /></span>
+              <span className="sb-label">Ver. disp. ut.</span>
             </NavLink>
           </>
         )}

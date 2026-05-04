@@ -75,6 +75,22 @@ function calcCost(monthlyPrice: number, days: number) {
   return Math.round(monthlyPrice * (days / 30.416) * 100) / 100;
 }
 
+function stripScheme(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const cleaned = value.replace(/^https?:\/\//i, "").replace(/\/+$/, "").trim();
+  return cleaned || null;
+}
+
+function splitHostPort(value: string | null | undefined): { host: string | null; port: string | null } {
+  const cleaned = stripScheme(value);
+  if (!cleaned) return { host: null, port: null };
+  const idx = cleaned.lastIndexOf(":");
+  if (idx === -1) return { host: cleaned, port: null };
+  const host = cleaned.slice(0, idx) || null;
+  const port = cleaned.slice(idx + 1) || null;
+  return { host, port };
+}
+
 const actionBtn = (color: string, bg: string, border: string) => ({
   display: "inline-flex", alignItems: "center", gap: 6,
   padding: "9px 16px", borderRadius: 10, fontSize: ".82rem", fontWeight: 600,
@@ -155,21 +171,25 @@ export default function JellyUserDetail() {
 
   const handleCopy = () => {
     if (!u) return;
+    const httpHostPort = splitHostPort(u.server_url);
+    const httpsHost = stripScheme(u.server_https);
     const lines = [
       "Dettagli account Jellyfin:",
       "",
       `Username: ${u.user ?? "—"}`,
       `Password: ${u.password ?? "—"}`,
-      `Attivazione: ${u.date_fmt ?? "—"}`,
+      "",
+      "HTTPS",
+      `  indirizzo: ${httpsHost ?? "—"}`,
+      `  porta: ${httpsHost ? "443" : "—"}`,
+      "",
+      `web: ${u.server_url ?? "—"}`,
+      `http app: ${httpHostPort.host ?? "—"}`,
+      `porta app http: ${httpHostPort.port ?? "—"}`,
+      "",
       `Scadenza: ${u.expiry_date ?? "—"}`,
       `Giorni rimanenti: ${formatDaysStatus(u.days_left)}`,
-      `Server: ${u.server ?? "—"}`,
-      `HTTP: ${u.server_url ?? "—"}`,
-      `HTTPS: ${u.server_https ? `${u.server_https}:443` : "—"}`,
-      `Schermi: ${u.schermi ?? "—"}`,
-      `4K: ${u.k4 ?? "—"}`,
-      `Download: ${u.download ?? "—"}`,
-      `Note: ${u.nota ?? "—"}`,
+      ...(options?.richieste ? ["", `Richieste: ${options.richieste}`] : []),
     ];
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
