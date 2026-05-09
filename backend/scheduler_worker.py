@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -20,6 +20,16 @@ app = FastAPI(title="Streaming Panel Next Scheduler", version="1.0.0")
 scheduler = BackgroundScheduler(daemon=True)
 running_scripts: set[str] = set()
 running_lock = threading.Lock()
+
+SCHEDULE_MINUTE_OFFSET = 10
+
+
+def _next_offset_start(minute_offset: int = SCHEDULE_MINUTE_OFFSET) -> datetime:
+    now = datetime.now()
+    candidate = now.replace(minute=minute_offset, second=0, microsecond=0)
+    if candidate <= now:
+        candidate += timedelta(hours=1)
+    return candidate
 
 
 def _require_internal_access(x_scheduler_secret: str | None = Header(default=None)) -> None:
@@ -109,16 +119,20 @@ def refresh_jobs() -> None:
         hours = int(schedule_entry.get("interval_hours") or 0)
         enabled = bool(schedule_entry.get("enabled")) and hours > 0
         if enabled:
+            start_date = _next_offset_start()
             scheduler.add_job(
                 trigger_script,
-                trigger=IntervalTrigger(hours=hours),
+                trigger=IntervalTrigger(hours=hours, start_date=start_date),
                 id=job_id,
                 args=[script_id],
                 replace_existing=True,
                 coalesce=True,
                 max_instances=1,
             )
-            print(f"[Scheduler] Job '{script_id}' programmato ogni {hours} ore")
+            print(
+                f"[Scheduler] Job '{script_id}' programmato ogni {hours} ore "
+                f"a partire da {start_date.strftime('%d/%m/%Y %H:%M:%S')}"
+            )
 
 
 def reset_running_flags() -> None:
