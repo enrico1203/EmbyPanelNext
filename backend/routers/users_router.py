@@ -413,8 +413,8 @@ def renew_emby_user(
     new_screens = validate_screens(payload.screens)
     current_screens = int(u.schermi or 1)
     days_left = _days_left(u.date, u.expiry)
-    if days_left is not None and days_left > 7 and new_screens < current_screens:
-        _raise("Non puoi diminuire gli schermi se l'utente scade tra più di 7 giorni")
+    if days_left is not None and days_left > 7 and new_screens > current_screens:
+        _raise("Non puoi aumentare gli schermi se l'utente scade tra più di 7 giorni")
 
     cost = calculate_cost(
         service_name,
@@ -600,8 +600,8 @@ def renew_jelly_user(
     new_screens = validate_screens(payload.screens)
     current_screens = int(u.schermi or 1)
     days_left = _days_left(u.date, u.expiry)
-    if days_left is not None and days_left > 7 and new_screens < current_screens:
-        _raise("Non puoi diminuire gli schermi se l'utente scade tra più di 7 giorni")
+    if days_left is not None and days_left > 7 and new_screens > current_screens:
+        _raise("Non puoi aumentare gli schermi se l'utente scade tra più di 7 giorni")
 
     cost = calculate_cost(
         "jellyfin",

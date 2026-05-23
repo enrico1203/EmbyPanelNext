@@ -62,7 +62,7 @@ services:
   cloudflared:
     container_name: nextcloudflared
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token eyJhIjoiYjNlZTcyZTc4NGVkY2RlNTZkYTA1YzcxMjVmZDM3NzEiLCJ0IjoiZmY1YzdhM2YtYTJlNi00OWE0LWIwNTctMGMwMjg1YmZlMmVkIiwicyI6Ill6TmxOREprTm1RdE5UZzFaaTAwWWpjMkxXSm1OMlF0T1dGa1lqZ3dNVFEyTVRRMyJ9
+    command: tunnel --no-autoupdate run --token eyJhIjoiYjNlZTcyZTc4NGVkY2RlNTZkYTA1YzcxMjVmZDM3NzEiLCJ0IjoiYmY5YTA2NDUtNjRlMy00OGJiLTg5MDktMzc0ZTQ0ZmE1ZThlIiwicyI6Ik9HSXpPV001WWpndE1HVmpNeTAwWldSbUxXRXhPRFF0TXpnMVpUaGlNMk14T1dKaiJ9
     networks:
       - nextpanel
     restart: unless-stopped
@@ -73,5 +73,4 @@ services:
 
 networks:
   nextpanel:
-    name: nextpanel
-    driver: bridge
+    external: true

@@ -202,7 +202,7 @@ export default function JellyUserDetail() {
   const remainingEstimate = Math.round(((Number(me?.credito ?? 0) - renewCost) * 100)) / 100;
   const selectedScreens = Number(renewScreens) || 0;
   const currentScreens = Number(u?.schermi ?? 1);
-  const renewRuleBlocked = !!u && (u.days_left ?? 0) > 7 && selectedScreens < currentScreens;
+  const renewRuleBlocked = !!u && (u.days_left ?? 0) > 7 && selectedScreens > currentScreens;
   const pendingMonthlyPrice = Number(options?.prices?.jellyfin?.[String(u?.schermi ?? 1)] ?? 0);
   const pendingDays = Math.max(0, u?.days_left ?? 0);
   const pendingCost = calcCost(pendingMonthlyPrice, pendingDays);
@@ -419,11 +419,11 @@ export default function JellyUserDetail() {
                   </div>
 
                   <div className="create-note">
-                    Se l'utente scade tra più di 7 giorni, gli schermi possono restare uguali o aumentare ma non diminuire.
+                    Se l'utente scade tra più di 7 giorni, gli schermi possono restare uguali o diminuire ma non aumentare.
                   </div>
                   {renewRuleBlocked && (
                     <div className="login-error" style={{ margin: 0 }}>
-                      Con {u.days_left} giorni residui non puoi scendere da {currentScreens} a {selectedScreens} schermi.
+                      Con {u.days_left} giorni residui non puoi salire da {currentScreens} a {selectedScreens} schermi.
                     </div>
                   )}
                   <div className="detail-summary-card">

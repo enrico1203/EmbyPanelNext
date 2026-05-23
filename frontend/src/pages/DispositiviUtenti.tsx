@@ -5,11 +5,12 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
 
 interface DeviceStat {
-  invito: number;
+  invito: number | null;
   username: string | null;
   server: string | null;
   server_tipo: string | null;
   device_count: number;
+  orphan?: boolean;
 }
 
 export default function DispositiviUtenti() {
@@ -52,6 +53,7 @@ export default function DispositiviUtenti() {
       </div>
       <p className="manage-subtitle" style={{ marginTop: 4 }}>
         Utenti Emby con almeno un dispositivo associato, ordinati dal numero di dispositivi più alto.
+        In rosso gli utenti che non sono più nel database ma hanno ancora dispositivi attivi.
       </p>
 
       {!loading && !error && rows.length > 0 && (
@@ -99,29 +101,56 @@ export default function DispositiviUtenti() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
-                  <tr
-                    key={row.invito}
-                    onClick={() => navigate(`/lista/emby/${row.invito}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td style={{ fontWeight: 600 }}>{row.username ?? "—"}</td>
-                    <td>
-                      <span style={{
-                        background: "rgba(108,142,247,.18)",
-                        color: "#a5b8f8",
-                        border: "1px solid rgba(108,142,247,.35)",
-                        borderRadius: 999,
-                        padding: "3px 12px",
-                        fontSize: ".82rem",
-                        fontWeight: 700,
-                      }}>
-                        {row.device_count}
-                      </span>
-                    </td>
-                    <td>{row.server ?? "—"}</td>
-                  </tr>
-                ))}
+                {filtered.map((row) => {
+                  const isOrphan = row.orphan || row.invito == null;
+                  return (
+                    <tr
+                      key={isOrphan ? `orphan-${row.username}` : row.invito}
+                      onClick={() => {
+                        if (!isOrphan) navigate(`/lista/emby/${row.invito}`);
+                      }}
+                      style={{
+                        cursor: isOrphan ? "default" : "pointer",
+                        background: isOrphan ? "rgba(231,76,60,.08)" : undefined,
+                      }}
+                      title={isOrphan ? "Utente eliminato dal DB ma con dispositivi ancora attivi" : undefined}
+                    >
+                      <td style={{ fontWeight: 600, color: isOrphan ? "#e74c3c" : undefined }}>
+                        {row.username ?? "—"}
+                        {isOrphan && (
+                          <span style={{
+                            marginLeft: 8,
+                            background: "rgba(231,76,60,.18)",
+                            color: "#e74c3c",
+                            border: "1px solid rgba(231,76,60,.45)",
+                            borderRadius: 999,
+                            padding: "2px 8px",
+                            fontSize: ".7rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: ".03em",
+                          }}>
+                            non in DB
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span style={{
+                          background: isOrphan ? "rgba(231,76,60,.18)" : "rgba(108,142,247,.18)",
+                          color: isOrphan ? "#e74c3c" : "#a5b8f8",
+                          border: `1px solid ${isOrphan ? "rgba(231,76,60,.45)" : "rgba(108,142,247,.35)"}`,
+                          borderRadius: 999,
+                          padding: "3px 12px",
+                          fontSize: ".82rem",
+                          fontWeight: 700,
+                        }}>
+                          {row.device_count}
+                        </span>
+                      </td>
+                      <td style={{ color: isOrphan ? "#e74c3c" : undefined }}>{row.server ?? "—"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

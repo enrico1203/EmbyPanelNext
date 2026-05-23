@@ -731,32 +731,39 @@ def admin_devices_stats(
     rows = db.execute(
         text(
             """
+            WITH dev_users AS (
+                SELECT
+                    LOWER(d."user") AS user_lower,
+                    MIN(d."user") AS username,
+                    COUNT(DISTINCT d.device) AS device_count
+                FROM public.devices d
+                WHERE d.device IS NOT NULL
+                  AND btrim(d.device) <> ''
+                  AND d."user" IS NOT NULL
+                  AND btrim(d."user") <> ''
+                GROUP BY LOWER(d."user")
+            )
             SELECT
                 e.invito,
-                e."user" AS username,
+                COALESCE(e."user", du.username) AS username,
                 e.server,
                 srv.tipo AS server_tipo,
-                COUNT(DISTINCT d.device) AS device_count
-            FROM public.euser e
-            JOIN public.devices d
-              ON LOWER(d."user") = LOWER(e."user")
-             AND d.device IS NOT NULL
-             AND btrim(d.device) <> ''
+                du.device_count
+            FROM dev_users du
+            LEFT JOIN public.euser e ON LOWER(e."user") = du.user_lower
             LEFT JOIN public.emby srv ON srv.nome = e.server
-            WHERE e."user" IS NOT NULL
-            GROUP BY e.invito, e."user", e.server, srv.tipo
-            HAVING COUNT(DISTINCT d.device) > 0
-            ORDER BY device_count DESC, LOWER(e."user") ASC
+            ORDER BY du.device_count DESC, LOWER(COALESCE(e."user", du.username)) ASC
             """
         )
     ).fetchall()
     return [
         {
-            "invito": int(row[0]),
+            "invito": int(row[0]) if row[0] is not None else None,
             "username": row[1],
             "server": row[2],
             "server_tipo": row[3],
             "device_count": int(row[4]),
+            "orphan": row[0] is None,
         }
         for row in rows
     ]

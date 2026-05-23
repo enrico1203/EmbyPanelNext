@@ -37,7 +37,7 @@ export default function Login() {
       } else {
         const debugParts = [code, message].filter(Boolean).join(" - ");
         setError(
-          `Impossibile contattare api.emby.at. Controlla connessione, VPN, adblock o Cloudflare.${debugParts ? ` Dettaglio: ${debugParts}` : ""}`
+          `Impossibile contattare apiemby.nuvola.zip. Controlla connessione, VPN, adblock o Cloudflare.${debugParts ? ` Dettaglio: ${debugParts}` : ""}`
         );
       }
     } finally {
