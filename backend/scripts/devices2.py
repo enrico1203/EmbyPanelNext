@@ -5,6 +5,7 @@ import os
 import posixpath
 import random
 import re
+import shutil
 import sqlite3
 import tempfile
 import time
@@ -15,10 +16,62 @@ from paramiko.ssh_exception import SSHException
 
 from common import run_execute, run_many, run_select, send_telegram_message
 
+DEFAULT_SSH_PORT = 22
+
 
 def _parse_host(url_or_host: str) -> str:
     parsed = urlsplit(url_or_host if "://" in url_or_host else f"//{url_or_host}")
     return (parsed.hostname or url_or_host).strip("[]")
+
+
+def _parse_override_map(env_name: str) -> dict[str, str]:
+    """Legge una mappa `chiave:valore,chiave:valore` da una env var.
+
+    Usata per gli override SSH, dato che l'url Emby (spesso dietro Cloudflare)
+    non coincide con l'host/porta SSH reali:
+        SSH_HOSTS=s2:78.47.86.60   -> host SSH reale (bypassa il proxy)
+        SSH_PORTS=s2:7913          -> porta SSH non standard
+    La chiave viene confrontata (case-insensitive) con il nome del server
+    o con l'host estratto dall'url.
+    """
+    raw = os.getenv(env_name, "")
+    result: dict[str, str] = {}
+    for item in raw.split(","):
+        item = item.strip()
+        if not item or ":" not in item:
+            continue
+        key, _, value = item.partition(":")
+        key = key.strip().lower()
+        value = value.strip()
+        if key and value:
+            result[key] = value
+    return result
+
+
+def _match_override(overrides: dict[str, str], nome: str, host: str) -> str | None:
+    if not overrides:
+        return None
+    # candidati: nome server, host completo (es. "s2.dominio") e prima label host (es. "s2")
+    for candidate in (nome, host, host.split(".")[0] if host else ""):
+        key = candidate.strip().lower() if candidate else ""
+        if key and key in overrides:
+            return overrides[key]
+    return None
+
+
+def _resolve_ssh_host(overrides: dict[str, str], nome: str, url_host: str) -> str:
+    return _match_override(overrides, nome, url_host) or url_host
+
+
+def _resolve_ssh_port(overrides: dict[str, str], nome: str, url_host: str) -> int:
+    raw = _match_override(overrides, nome, url_host)
+    if raw is None:
+        return DEFAULT_SSH_PORT
+    try:
+        return int(raw)
+    except ValueError:
+        print(f"[WARN] SSH_PORTS: porta non valida per '{nome or url_host}': {raw!r}")
+        return DEFAULT_SSH_PORT
 
 
 def get_list_premium() -> list[dict]:
@@ -26,7 +79,7 @@ def get_list_premium() -> list[dict]:
         """
         SELECT nome, url, "user", password, percorso
         FROM public.emby
-        WHERE LOWER(nome) LIKE 'e%'
+        WHERE url IS NOT NULL AND url != ''
         ORDER BY nome
         """
     )
@@ -65,7 +118,7 @@ def parse_activitylog(local_db_path: str) -> list[dict]:
     return [{"user": username, "device": device} for username, device in sorted(parsed)]
 
 
-def process_server_group(host: str, ssh_user: str, ssh_password: str, servers: list[dict]) -> list[dict]:
+def process_server_group(host: str, port: int, ssh_user: str, ssh_password: str, servers: list[dict]) -> list[dict]:
     backoff = 1.0
     last_error: Exception | None = None
 
@@ -73,9 +126,10 @@ def process_server_group(host: str, ssh_user: str, ssh_password: str, servers: l
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            print(f"=== Host {host} -> servers: {[server['nome'] for server in servers]} ===")
+            print(f"=== Host {host}:{port} -> servers: {[server['nome'] for server in servers]} ===")
             ssh.connect(
                 host,
+                port=port,
                 username=ssh_user,
                 password=ssh_password,
                 timeout=15,
@@ -98,11 +152,20 @@ def process_server_group(host: str, ssh_user: str, ssh_password: str, servers: l
                         continue
 
                     remote_path = posixpath.join(server["percorso"], "config", "data", "activitylog.db")
-                    with tempfile.NamedTemporaryFile(suffix=f"_{server['nome']}.db", delete=False) as tmp:
-                        local_path = tmp.name
+                    tmpdir = tempfile.mkdtemp(prefix=f"devices2_{server['nome']}_")
+                    local_path = os.path.join(tmpdir, "activitylog.db")
 
                     try:
                         sftp.get(remote_path, local_path)
+                        # Il DB Emby gira in modalità WAL: tabelle e dati recenti stanno
+                        # nei file -wal/-shm non ancora "checkpointati" nel .db principale.
+                        # Vanno scaricati accanto al .db (stesso basename), altrimenti
+                        # SQLite vede un database vuoto ("no such table: ActivityLog").
+                        for ext in ("-wal", "-shm"):
+                            try:
+                                sftp.get(remote_path + ext, local_path + ext)
+                            except IOError:
+                                pass  # DB non in WAL o file assente: ok
                         print(f"[OK] {server['nome']}: scaricato {remote_path}")
                         server_rows = parse_activitylog(local_path)
                         processed_servers.append({
@@ -110,8 +173,7 @@ def process_server_group(host: str, ssh_user: str, ssh_password: str, servers: l
                             "rows": server_rows,
                         })
                     finally:
-                        if os.path.exists(local_path):
-                            os.remove(local_path)
+                        shutil.rmtree(tmpdir, ignore_errors=True)
 
                     time.sleep(0.2)
             finally:
@@ -130,11 +192,11 @@ def process_server_group(host: str, ssh_user: str, ssh_password: str, servers: l
                 break
 
             sleep_seconds = backoff + random.uniform(0, 0.5)
-            print(f"[WARN] Host {host}: {exc}. Retry tra {sleep_seconds:.1f}s")
+            print(f"[WARN] Host {host}:{port}: {exc}. Retry tra {sleep_seconds:.1f}s")
             time.sleep(sleep_seconds)
             backoff *= 2
 
-    raise RuntimeError(f"Host {host}: errore persistente: {last_error}")
+    raise RuntimeError(f"Host {host}:{port}: errore persistente: {last_error}")
 
 
 def run() -> None:
@@ -143,15 +205,21 @@ def run() -> None:
         print("Nessun server Emby trovato.")
         return
 
-    groups: dict[tuple[str, str, str], list[dict]] = {}
+    ssh_host_overrides = _parse_override_map("SSH_HOSTS")
+    ssh_port_overrides = _parse_override_map("SSH_PORTS")
+
+    groups: dict[tuple[str, int, str, str], list[dict]] = {}
     for server in servers:
-        host = _parse_host(server["url"] or "")
+        nome = server["nome"] or ""
+        url_host = _parse_host(server["url"] or "")
         ssh_user = server["user"] or ""
         ssh_password = server["password"] or ""
-        if not host or not ssh_user or not ssh_password:
-            print(f"[SKIP] {server['nome']}: host/user/password mancanti")
+        if not url_host or not ssh_user or not ssh_password:
+            print(f"[SKIP] {nome}: host/user/password mancanti")
             continue
-        groups.setdefault((host, ssh_user, ssh_password), []).append(server)
+        ssh_host = _resolve_ssh_host(ssh_host_overrides, nome, url_host)
+        port = _resolve_ssh_port(ssh_port_overrides, nome, url_host)
+        groups.setdefault((ssh_host, port, ssh_user, ssh_password), []).append(server)
 
     send_telegram_message(f"Avvio devices2 su {len(groups)} host")
 
@@ -161,9 +229,9 @@ def run() -> None:
 
     run_execute('DELETE FROM public.devices')
 
-    for (host, ssh_user, ssh_password), grouped_servers in groups.items():
+    for (host, port, ssh_user, ssh_password), grouped_servers in groups.items():
         try:
-            processed_servers = process_server_group(host, ssh_user, ssh_password, grouped_servers)
+            processed_servers = process_server_group(host, port, ssh_user, ssh_password, grouped_servers)
             for processed in processed_servers:
                 processed_count += 1
                 server_name = processed["server"]

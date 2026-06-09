@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, Trash2, Film, Key, StickyNote, Copy, Check, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, RotateCcw, RefreshCw, Trash2, Film, Key, StickyNote, Copy, Check, LoaderCircle, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/client";
 
@@ -39,7 +39,7 @@ interface EmbyActionResponse {
   remaining_credit?: number | null;
 }
 
-type ModalType = "renew" | "delete" | "password" | "note" | null;
+type ModalType = "renew" | "recreate" | "delete" | "password" | "note" | null;
 type Notice = { type: "success" | "error"; text: string } | null;
 
 function formatDaysStatus(days: number | null) {
@@ -252,6 +252,13 @@ export default function EmbyUserDetail() {
     );
   };
 
+  const handleRecreate = async () => {
+    await runAction(
+      "recreate",
+      api.post(`/users/emby/${invito}/recreate`),
+    );
+  };
+
   const handleDelete = async () => {
     setSubmitting("delete");
     setNotice(null);
@@ -324,6 +331,11 @@ export default function EmbyUserDetail() {
             <button style={actionBtn("#f9a8a8", "rgba(239,68,68,.18)", "rgba(239,68,68,.35)")} onClick={() => openModal("delete")} disabled={!!submitting}>
               <Trash2 size={14} /> Cancella
             </button>
+            {isAdmin && (
+              <button style={actionBtn("#7dd3fc", "rgba(56,189,248,.16)", "rgba(56,189,248,.32)")} onClick={() => openModal("recreate")} disabled={!!submitting}>
+                <RefreshCw size={14} /> Ricrea
+              </button>
+            )}
             <button style={actionBtn("var(--gold)", "rgba(245,184,75,.18)", "rgba(245,184,75,.35)")} onClick={() => handleToggle4k(false)} disabled={!!submitting || (u.k4 ?? "").toLowerCase() !== "true"}>
               <Film size={14} /> Togli 4K
             </button>
@@ -424,6 +436,7 @@ export default function EmbyUserDetail() {
             <div className="modal-header">
               <span className="modal-title">
                 {modal === "renew" && "Rinnova utente Emby"}
+                {modal === "recreate" && "Ricrea utente Emby"}
                 {modal === "delete" && "Cancella utente Emby"}
                 {modal === "password" && "Cambia password"}
                 {modal === "note" && "Aggiorna nota"}
@@ -477,6 +490,26 @@ export default function EmbyUserDetail() {
                   </button>
                 </div>
               </form>
+            )}
+
+            {modal === "recreate" && (
+              <>
+                <div className="modal-body">
+                  <p style={{ margin: 0, color: "var(--txt)" }}>
+                    Vuoi ricreare l'utente <strong>{u.user}</strong> sul server <strong>{u.server}</strong> con le impostazioni salvate ({u.schermi ?? 1} schermi, 4K {(u.k4 ?? "").toLowerCase() === "true" ? "attivo" : "disattivo"})?
+                  </p>
+                  <div className="create-note">
+                    Ricrea l'account sul server Emby usando username, password e impostazioni del database. Non modifica il credito né la scadenza. Se l'utente esiste già sul server, le impostazioni vengono riallineate.
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-ghost" onClick={closeModal} disabled={!!submitting}>Annulla</button>
+                  <button type="button" className="btn btn-primary" onClick={handleRecreate} disabled={!!submitting}>
+                    {submitting === "recreate" ? <LoaderCircle size={15} className="spin-inline" /> : <RefreshCw size={15} />}
+                    Ricrea utente
+                  </button>
+                </div>
+              </>
             )}
 
             {modal === "delete" && (

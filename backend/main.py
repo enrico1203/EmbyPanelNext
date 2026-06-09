@@ -15,7 +15,7 @@ app = FastAPI(title="Streaming Panel Next API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://reseller.nuvola.zip",
+        "https://reseller.emby.at",
         "http://localhost:9090",
         "http://localhost:5173",
     ],

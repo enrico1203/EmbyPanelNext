@@ -500,6 +500,56 @@ def delete_emby_user(
     return EmbyDeleteResponse(message=f"Utente Emby {username or invito} cancellato con successo")
 
 
+@router.post("/users/emby/{invito}/recreate", response_model=EmbyActionResponse)
+def recreate_emby_user(
+    invito: int,
+    current_user: Reseller = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.ruolo != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo gli admin possono ricreare un utente")
+
+    u = _get_emby_user_or_404(invito, db)
+
+    username = (u.user or "").strip()
+    server_name = (u.server or "").strip()
+    if not username or not server_name:
+        _raise("Utente Emby incompleto: mancano username o server")
+    password = (u.password or "").strip()
+    if not password:
+        _raise("Utente Emby senza password salvata: impossibile ricreare")
+
+    screens = validate_screens(int(u.schermi or 1))
+
+    # Ricrea l'account sul server con le stesse impostazioni del "crea":
+    # create_user (con password) -> default_user_policy (limite schermi) -> 4K secondo lo stato salvato.
+    created = embyapi.create_user(server_name, username, password, db=db)
+    user_id = created.get("user_id")
+    if not user_id:
+        _raise(f"Ricreazione utente Emby '{username}' fallita sul server {server_name}")
+
+    embyapi.default_user_policy(server_name, user_id, screens, db=db)
+    already_existed = not created.get("created")
+    if already_existed:
+        # Utente gia presente sul server: riallinea la password a quella salvata in DB.
+        embyapi.change_password(server_name, username, password, db=db)
+    if (u.k4 or "").strip().lower() == "true":
+        embyapi.enable_4k(server_name, username, db=db)
+    else:
+        embyapi.disable_4k(server_name, username, db=db)
+
+    _record_zero_cost_movement(db, current_user, "ricrea", username)
+    db.commit()
+    db.refresh(u)
+
+    message = (
+        f"Utente Emby {username} riconfigurato sul server {server_name}"
+        if already_existed
+        else f"Utente Emby {username} ricreato sul server {server_name}"
+    )
+    return EmbyActionResponse(message=message, user=_emby_detail(u, db))
+
+
 @router.post("/users/emby/{invito}/disable-4k", response_model=EmbyActionResponse)
 def disable_emby_4k(
     invito: int,
